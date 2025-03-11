@@ -6,6 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { parseArgs } from 'node:util';
+import { readFileSync } from 'fs';
 
 // Import connector modules
 import './connectors/postgres/index.js';  // Register PostgreSQL connector
@@ -61,10 +62,18 @@ function loadEnvFiles(): string | null {
 // Get database connection info
 const connectorManager = new ConnectorManager();
 
+// Load package.json to get version
+const packageJsonPath = path.join(__dirname, '..', 'package.json');
+const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+
+// Define server info
+const SERVER_NAME = "DBHub MCP Server";
+const SERVER_VERSION = packageJson.version;
+
 // Create MCP server
 const server = new McpServer({
-  name: "DBHub MCP Server",
-  version: "0.0.1"
+  name: SERVER_NAME,
+  version: SERVER_VERSION
 });
 
 // Resource for listing all tables
@@ -220,6 +229,19 @@ See documentation for more details on configuring database connections.
     // Start the server with stdio transport
     const transport = new StdioServerTransport();
     console.error(`Starting DBHub MCP Server...`);
+    
+    // Print ASCII art banner with version and slogan
+    console.error(`
+ _____  ____  _   _       _     
+|  __ \\|  _ \\| | | |     | |    
+| |  | | |_) | |_| |_   _| |__  
+| |  | |  _ <|  _  | | | | '_ \\ 
+| |__| | |_) | | | | |_| | |_) |
+|_____/|____/|_| |_|\\__,_|_.__/ 
+                                
+v${SERVER_VERSION} - Universal Database MCP Server
+`);
+    
     await server.connect(transport);
   } catch (err) {
     console.error("Fatal error:", err);

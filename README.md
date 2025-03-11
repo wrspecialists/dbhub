@@ -1,6 +1,6 @@
-# DBHub - Universal MCP Server
+# DBHub - Universal Database MCP Server
 
-DBHub is a universal server implementing the Model Context Protocol (MCP) interface. This server allows LLMs to connect to and explore different databases safely.
+DBHub is a universal database gateway implementing the Model Context Protocol (MCP) server interface. This gateway allows MCP-compatible client to connect to and explore different databases.
 
 ## Features
 
