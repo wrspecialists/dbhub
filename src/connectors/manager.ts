@@ -1,5 +1,8 @@
 import { Connector, ConnectorRegistry } from '../interfaces/connector.js';
 
+// Singleton instance for global access
+let managerInstance: ConnectorManager | null = null;
+
 /**
  * Manages database connectors and provides a unified interface to work with them
  */
@@ -7,7 +10,11 @@ export class ConnectorManager {
   private activeConnector: Connector | null = null;
   private connected = false;
 
-  constructor() {}
+  constructor() {
+    if (!managerInstance) {
+      managerInstance = this;
+    }
+  }
 
   /**
    * Initialize and connect to the database using a DSN
@@ -87,5 +94,16 @@ export class ConnectorManager {
    */
   static getAllSampleDSNs(): { [connectorId: string]: string } {
     return ConnectorRegistry.getAllSampleDSNs();
+  }
+  
+  /**
+   * Get the current active connector instance
+   * This is used by resource and tool handlers
+   */
+  static getCurrentConnector(): Connector {
+    if (!managerInstance) {
+      throw new Error('ConnectorManager not initialized');
+    }
+    return managerInstance.getConnector();
   }
 }
