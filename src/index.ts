@@ -17,26 +17,38 @@ import { ConnectorRegistry } from './interfaces/connector.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Try to load environment variables from multiple possible locations
-const envPaths = [
-  '.env',                                      // Current working directory
-  path.join(__dirname, '.env'),                // Same directory as the script
-  path.join(__dirname, '..', '.env'),          // Parent directory (for compiled code)
-  path.join(process.cwd(), '.env')             // Explicit current working directory
-];
+// Determine if we're in development or production mode
+const isDevelopment = process.env.NODE_ENV === 'development' || process.argv[1]?.includes('tsx');
 
-// Try to load .env file from various locations
+// Select environment file names based on environment
+const envFileNames = isDevelopment 
+  ? ['.env.local', '.env'] // In development, try .env.local first, then .env
+  : ['.env']; // In production, only look for .env
+
+// Build paths to check for environment files
+const envPaths = [];
+for (const fileName of envFileNames) {
+  envPaths.push(
+    fileName, // Current working directory
+    path.join(__dirname, fileName), // Same directory as the script
+    path.join(__dirname, '..', fileName), // Parent directory (for compiled code)
+    path.join(process.cwd(), fileName) // Explicit current working directory
+  );
+}
+
+// Try to load the first env file found from the prioritized locations
 let envLoaded = false;
 for (const envPath of envPaths) {
+  console.error(`Checking for env file: ${envPath}`);
   if (fs.existsSync(envPath)) {
-    console.error(`Loading environment from: ${envPath}`);
+    console.error(`Found and loading environment from: ${envPath}`);
     dotenv.config({ path: envPath });
     envLoaded = true;
     break;
   }
 }
 
-// Note: If no .env file is found, we'll check command line args and environment variables later
+// Note: If no env file is found, we'll check command line args and environment variables directly
 
 // Parse command line arguments
 const { values } = parseArgs({
