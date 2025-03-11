@@ -1,5 +1,5 @@
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { z } from "zod";
 import dotenv from "dotenv";
 import path from 'path';
@@ -7,6 +7,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { parseArgs } from 'node:util';
 import { readFileSync } from 'fs';
+import express from 'express';
 
 // Import connector modules
 import './connectors/postgres/index.js';  // Register PostgreSQL connector
@@ -226,9 +227,24 @@ See documentation for more details on configuring database connections.
     console.error(`Connecting with DSN: ${dsn}`);
     await connectorManager.connectWithDSN(dsn);
     
-    // Start the server with stdio transport
-    const transport = new StdioServerTransport();
-    console.error(`Starting DBHub MCP Server...`);
+    // Set up Express server for SSE transport
+    const app = express();
+    let transport: SSEServerTransport;
+
+    app.get("/sse", async (req, res) => {
+      transport = new SSEServerTransport("/message", res);
+      console.error("Client connected", transport?.['_sessionId']);
+      await server.connect(transport);
+      server.onclose = async () => {
+        console.error("Client Disconnected", transport?.['_sessionId']);
+      };
+    });
+    
+    app.post("/message", async (req, res) => {
+      console.error("Client Message", transport?.['_sessionId']);
+      await transport.handlePostMessage(req, res, req.body);
+    });
+    
     
     // Print ASCII art banner with version and slogan
     console.error(`
@@ -242,7 +258,12 @@ See documentation for more details on configuring database connections.
 v${SERVER_VERSION} - Universal Database MCP Server
 `);
     
-    await server.connect(transport);
+    // Start the HTTP server
+    const port = process.env.PORT || 8080;
+    app.listen(port, () => {
+      console.error(`DBHub server listening at http://localhost:${port}`);
+      console.error(`Connect to MCP server at http://localhost:${port}/sse`);
+    });
   } catch (err) {
     console.error("Fatal error:", err);
     process.exit(1);

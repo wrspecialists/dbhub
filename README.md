@@ -52,11 +52,3 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
    pnpm build
    pnpm start
    ```
-
-### Using with [MCP Inspector](https://github.com/modelcontextprotocol/inspector)
-
-```bash
-# Start the MCP Inspector and point it to your DBHub server with a DSN
-
-DSN=postgres://user:password@localhost:5432/dbname?sslmode=disable npx @modelcontextprotocol/inspector node /path/to/dbhub/dist/index.js
-```
