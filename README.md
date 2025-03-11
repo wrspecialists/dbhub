@@ -53,13 +53,10 @@ DBHub is a universal server implementing the Model Context Protocol (MCP) interf
    pnpm start
    ```
 
-## Usage
+### Using with [MCP Inspector](https://github.com/modelcontextprotocol/inspector)
 
-This server can be used with any MCP-compatible client, including:
+```bash
+# Start the MCP Inspector and point it to your DBHub server with a DSN
 
-- LLM platforms that support MCP
-- The [MCP Inspector](https://github.com/modelcontextprotocol/inspector)
-
-## License
-
-MIT License
+DSN=postgres://user:password@localhost:5432/dbname?sslmode=disable npx @modelcontextprotocol/inspector node /path/to/dbhub/dist/index.js
+```
