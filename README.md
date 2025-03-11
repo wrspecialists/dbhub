@@ -27,6 +27,12 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
 - Run read-only SQL queries against the database
 - Safety checks to prevent dangerous queries
 
+## Usage
+
+### Claude Desktop
+
+![claude-desktop](https://raw.githubusercontent.com/bytebase/dbhub/main/assets/claude-desktop.webp)
+
 ## Setup
 
 1. Install dependencies:
