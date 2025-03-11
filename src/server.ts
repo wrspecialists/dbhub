@@ -1,13 +1,14 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import express from 'express';
 
 import { ConnectorManager } from './connectors/manager.js';
 import { ConnectorRegistry } from './interfaces/connector.js';
-import { resolveDSN } from './config/env.js';
+import { resolveDSN, resolveTransport } from './config/env.js';
 import { SERVER_NAME, SERVER_VERSION } from './utils/package-info.js';
 import { generateBanner } from './utils/ascii-banner.js';
-import { registerResources } from './routes/index.js';
+import { registerResources } from './resources/index.js';
 import { registerTools } from './tools/index.js';
 import { registerPrompts } from './prompts/index.js';
 
@@ -58,35 +59,55 @@ See documentation for more details on configuring database connections.
     console.error(`DSN source: ${dsnData.source}`);
     await connectorManager.connectWithDSN(dsnData.dsn);
     
-    // Set up Express server for SSE transport
-    const app = express();
-    let transport: SSEServerTransport;
-
-    app.get("/sse", async (req, res) => {
-      transport = new SSEServerTransport("/message", res);
-      console.error("Client connected", transport?.['_sessionId']);
-      await server.connect(transport);
-      
-      // Listen for connection close
-      res.on('close', () => {
-        console.error("Client Disconnected", transport?.['_sessionId']);
-      });
-    });
-    
-    app.post("/message", async (req, res) => {
-      console.error("Client Message", transport?.['_sessionId']);
-      await transport.handlePostMessage(req, res, req.body);
-    });
+    // Resolve transport type
+    const transportData = resolveTransport();
+    console.error(`Using transport: ${transportData.type}`);
+    console.error(`Transport source: ${transportData.source}`);
     
     // Print ASCII art banner with version and slogan
     console.error(generateBanner(SERVER_VERSION));
     
-    // Start the HTTP server
-    const port = process.env.PORT || 8080;
-    app.listen(port, () => {
-      console.error(`DBHub server listening at http://localhost:${port}`);
-      console.error(`Connect to MCP server at http://localhost:${port}/sse`);
-    });
+    // Set up transport based on type
+    if (transportData.type === 'sse') {
+      // Set up Express server for SSE transport
+      const app = express();
+      let transport: SSEServerTransport;
+
+      app.get("/sse", async (req, res) => {
+        transport = new SSEServerTransport("/message", res);
+        console.error("Client connected", transport?.['_sessionId']);
+        await server.connect(transport);
+        
+        // Listen for connection close
+        res.on('close', () => {
+          console.error("Client Disconnected", transport?.['_sessionId']);
+        });
+      });
+      
+      app.post("/message", async (req, res) => {
+        console.error("Client Message", transport?.['_sessionId']);
+        await transport.handlePostMessage(req, res, req.body);
+      });
+      
+      // Start the HTTP server
+      const port = process.env.PORT || 8080;
+      app.listen(port, () => {
+        console.error(`DBHub server listening at http://localhost:${port}`);
+        console.error(`Connect to MCP server at http://localhost:${port}/sse`);
+      });
+    } else {
+      // Set up STDIO transport
+      const transport = new StdioServerTransport();
+      console.error("Starting with STDIO transport");
+      await server.connect(transport);
+      
+      // Listen for SIGINT to gracefully shut down
+      process.on('SIGINT', async () => {
+        console.error('Shutting down...');
+        await transport.close();
+        process.exit(0);
+      });
+    }
   } catch (err) {
     console.error("Fatal error:", err);
     process.exit(1);

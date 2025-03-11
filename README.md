@@ -59,6 +59,20 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
      DSN=postgres://user:password@localhost:5432/dbname?sslmode=disable
      ```
 
+1. Choose a transport mode:
+
+   DBHub supports two transport modes:
+   
+   - **stdio** (default) - for direct integration with tools like Claude Desktop
+     ```bash
+     pnpm dev --transport=stdio
+     ```
+   
+   - **sse** - for browser and network clients
+     ```bash
+     pnpm dev --transport=sse
+     ```
+
 1. Run in development mode:
 
    ```bash
@@ -73,8 +87,19 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
 
 ### Using with [MCP Inspector](https://github.com/modelcontextprotocol/inspector)
 
+#### stdio
+
 ```bash
-# Start the MCP Inspector
+TRANSPORT=stdio DSN=postgres://postgres:testpwd1@localhost:5432/postgres?sslmode=disable npx @modelcontextprotocol/inspector node /path/to/dbhub/dist/index.js
+```
+
+#### SSE
+
+```bash
+# Start DBHub with SSE transport
+pnpm dev --transport=sse 
+
+# Start the MCP Inspector in another terminal
 npx @modelcontextprotocol/inspector
 ```
 

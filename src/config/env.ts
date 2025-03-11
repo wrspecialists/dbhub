@@ -12,7 +12,8 @@ const __dirname = path.dirname(__filename);
 export function parseCommandLineArgs() {
   const { values } = parseArgs({
     options: {
-      dsn: { type: 'string' }
+      dsn: { type: 'string' },
+      transport: { type: 'string' }
     }
   });
   
@@ -80,4 +81,28 @@ export function resolveDSN(): { dsn: string; source: string } | null {
   }
   
   return null;
+}
+
+/**
+ * Resolve transport type from command line args or environment variables
+ * Returns 'stdio' or 'sse', with 'stdio' as the default
+ */
+export function resolveTransport(): { type: 'stdio' | 'sse'; source: string } {
+  // Get command line arguments
+  const args = parseCommandLineArgs();
+  
+  // 1. Check command line arguments first (highest priority)
+  if (args.transport) {
+    const type = args.transport === 'sse' ? 'sse' : 'stdio';
+    return { type, source: 'command line argument' };
+  }
+  
+  // 2. Check environment variables
+  if (process.env.TRANSPORT) {
+    const type = process.env.TRANSPORT === 'sse' ? 'sse' : 'stdio';
+    return { type, source: 'environment variable' };
+  }
+  
+  // 3. Default to stdio
+  return { type: 'stdio', source: 'default' };
 }
