@@ -1,5 +1,6 @@
 import { ConnectorManager } from '../connectors/manager.js';
 import { ConnectorRegistry } from '../interfaces/connector.js';
+import { createToolSuccessResponse } from '../utils/response-formatter.js';
 
 /**
  * List-connectors tool handler
@@ -9,14 +10,18 @@ export async function listConnectorsToolHandler(_args: {}, _extra: any) {
   const connectors = ConnectorManager.getAvailableConnectors();
   const samples = ConnectorRegistry.getAllSampleDSNs();
   
-  const formattedSamples = Object.entries(samples)
-    .map(([id, dsn]) => `${id}: ${dsn}`)
-    .join('\n');
+  // Convert to a more structured format
+  const sampleObjects = Object.entries(samples).map(([id, dsn]) => ({ 
+    id, 
+    dsn 
+  }));
   
-  return {
-    content: [{ 
-      type: "text" as const, 
-      text: `Available database connectors:\n\n${formattedSamples}`
-    }]
+  // Prepare response data
+  const responseData = {
+    connectors: sampleObjects,
+    count: sampleObjects.length
   };
+  
+  // Use the utility to create a standardized response
+  return createToolSuccessResponse(responseData);
 }

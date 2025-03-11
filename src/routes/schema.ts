@@ -1,5 +1,6 @@
 import { ConnectorManager } from '../connectors/manager.js';
 import { Variables } from '@modelcontextprotocol/sdk/shared/uriTemplate.js';
+import { createResourceSuccessResponse, createResourceErrorResponse } from '../utils/response-formatter.js';
 
 /**
  * Schema resource handler
@@ -16,18 +17,29 @@ export async function schemaResourceHandler(uri: URL, variables: Variables, _ext
     // If table doesn't exist, getTableSchema will throw an error
     const columns = await connector.getTableSchema(tableName);
     
-    // Format schema information
-    const schemaInfo = columns.map(col => 
-      `${col.column_name} ${col.data_type} ${col.is_nullable === 'YES' ? 'NULL' : 'NOT NULL'}${col.column_default ? ` DEFAULT ${col.column_default}` : ''}`
-    ).join('\n');
+    // Create a more structured response
+    const formattedColumns = columns.map(col => ({
+      name: col.column_name,
+      type: col.data_type,
+      nullable: col.is_nullable === 'YES',
+      default: col.column_default
+    }));
     
-    return {
-      contents: [{
-        uri: uri.href,
-        text: `Schema for table '${tableName}':\n\n${schemaInfo}`
-      }]
+    // Prepare response data
+    const responseData = {
+      table: tableName,
+      columns: formattedColumns,
+      count: formattedColumns.length
     };
+    
+    // Use the utility to create a standardized response
+    return createResourceSuccessResponse(uri.href, responseData);
   } catch (error) {
-    throw new Error(`Table '${tableName}' does not exist or cannot be accessed`);
+    // Use the utility to create a standardized error response
+    return createResourceErrorResponse(
+      uri.href,
+      `Table '${tableName}' does not exist or cannot be accessed`,
+      "TABLE_NOT_FOUND"
+    );
   }
 }

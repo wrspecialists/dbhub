@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ConnectorManager } from '../connectors/manager.js';
+import { createToolSuccessResponse, createToolErrorResponse } from '../utils/response-formatter.js';
 
 // Schema for run-query tool
 export const runQuerySchema = { 
@@ -18,34 +19,26 @@ export async function runQueryToolHandler({ query }: { query: string }, _extra: 
     const validationResult = connector.validateQuery(query);
     
     if (!validationResult.isValid) {
-      return {
-        content: [{ 
-          type: "text" as const, 
-          text: `Query validation failed: ${validationResult.message ?? "Unknown error"}`
-        }],
-        isError: true
-      };
+      return createToolErrorResponse(
+        validationResult.message ?? "Unknown validation error",
+        "VALIDATION_ERROR"
+      );
     }
     
     // Execute the query if validation passed
     const result = await connector.executeQuery(query);
     
-    // Build response, including any warnings from validation
-    let responseText = JSON.stringify(result.rows, null, 2);
+    // Build response data
+    const responseData = {
+      rows: result.rows,
+      count: result.rows.length
+    };
     
-    return {
-      content: [{ 
-        type: "text" as const, 
-        text: responseText
-      }]
-    };
+    return createToolSuccessResponse(responseData);
   } catch (error) {
-    return {
-      content: [{ 
-        type: "text" as const, 
-        text: `Error executing query: ${(error as Error).message}`
-      }],
-      isError: true
-    };
+    return createToolErrorResponse(
+      (error as Error).message,
+      "EXECUTION_ERROR"
+    );
   }
 }
