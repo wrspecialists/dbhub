@@ -3,21 +3,21 @@
 DBHub is a universal database gateway implementing the Model Context Protocol (MCP) server interface. This gateway allows MCP-compatible client to connect to and explore different databases.
 
 ```bash
- +---------------+    +--------------+    +------------------+
- |               |    |              |    |                  |
- |               |    |              |    |                  |
- | Claude Desktop+--->+              +--->+    PostgreSQL    |
- |               |    |              |    |                  |
- |    Cursor     +--->+    DBHub     +--->+      MySQL       |
- |               |    |              |    |                  |
- |  Other MCP    +--->+              +--->+     SQLite       |
- |   Clients     |    |              |    |                  |
- |               |    |              +--->+     DuckDB       |
- |               |    |              |    |                  |
- |               |    |              +--->+  Other Databases |
- |               |    |              |    |                  |
- +---------------+    +--------------+    +------------------+
-    MCP Clients          MCP Server             Databases
+ +------------------+    +--------------+    +------------------+
+ |                  |    |              |    |                  |
+ |                  |    |              |    |                  |
+ |  Claude Desktop  +--->+              +--->+    PostgreSQL    |
+ |                  |    |              |    |                  |
+ |      Cursor      +--->+    DBHub     +--->+      MySQL       |
+ |                  |    |              |    |                  |
+ |     Other MCP    +--->+              +--->+     SQLite       |
+ |      Clients     |    |              |    |                  |
+ |                  |    |              +--->+     DuckDB       |
+ |                  |    |              |    |                  |
+ |                  |    |              +--->+  Other Databases |
+ |                  |    |              |    |                  |
+ +------------------+    +--------------+    +------------------+
+      MCP Clients           MCP Server             Databases
  ```
 
 ## Features
@@ -33,7 +33,7 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
 
 ![claude-desktop](https://raw.githubusercontent.com/bytebase/dbhub/main/assets/claude-desktop.webp)
 
-## Setup
+## Development
 
 1. Install dependencies:
 
@@ -88,15 +88,15 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
 1. Build for production:
    ```bash
    pnpm build
-   pnpm start
+   pnpm start --transport=stdio --dsn="postgres://user:password@localhost:5432/dbname?sslmode=disable"
    ```
 
-### Using with [MCP Inspector](https://github.com/modelcontextprotocol/inspector)
+### Debug with [MCP Inspector](https://github.com/modelcontextprotocol/inspector)
 
 #### stdio
 
 ```bash
-TRANSPORT=stdio DSN=postgres://postgres:testpwd1@localhost:5432/postgres?sslmode=disable npx @modelcontextprotocol/inspector node /path/to/dbhub/dist/index.js
+TRANSPORT=stdio DSN="postgres://user:password@localhost:5432/dbname?sslmode=disable" npx @modelcontextprotocol/inspector node /path/to/dbhub/dist/index.js
 ```
 
 #### SSE
