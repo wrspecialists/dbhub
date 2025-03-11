@@ -45,8 +45,8 @@ const pool = new Pool({
 
 // Create MCP server
 const server = new McpServer({
-  name: "PostgreSQL MCP Server",
-  version: "1.0.0"
+  name: "DBHub MCP Server",
+  version: "0.0.1"
 });
 
 // Resource for listing all tables
