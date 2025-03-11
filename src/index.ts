@@ -47,7 +47,7 @@ function loadEnvFiles(): string | null {
 
   // Try to load the first env file found from the prioritized locations
   for (const envPath of envPaths) {
-    console.info(`Checking for env file: ${envPath}`);
+    console.error(`Checking for env file: ${envPath}`);
     if (fs.existsSync(envPath)) {
       dotenv.config({ path: envPath });
       // Return the name of the file that was loaded
@@ -175,19 +175,19 @@ async function main() {
     // 1. Check command line arguments first (highest priority)
     if (values.dsn) {
       dsn = values.dsn;
-      console.info('Using DSN from command line argument');
+      console.error('Using DSN from command line argument');
     }
     // 2. Check environment variables if no command line argument (but before loading .env)
     else if (process.env.DSN) {
       dsn = process.env.DSN;
-      console.info('Using DSN from environment variable');
+      console.error('Using DSN from environment variable');
     }
     // 3. If no command line or environment variable, try loading from .env files
     else {
       const loadedEnvFile = loadEnvFiles();
       if (loadedEnvFile && process.env.DSN) {
         dsn = process.env.DSN;
-        console.info(`Using DSN from ${loadedEnvFile} file`);
+        console.error(`Using DSN from ${loadedEnvFile} file`);
       }
     }
     
@@ -214,12 +214,12 @@ See documentation for more details on configuring database connections.
     }
     
     // Connect using DSN string
-    console.info(`Connecting with DSN: ${dsn}`);
+    console.error(`Connecting with DSN: ${dsn}`);
     await connectorManager.connectWithDSN(dsn);
     
     // Start the server with stdio transport
     const transport = new StdioServerTransport();
-    console.info(`Starting DBHub MCP Server...`);
+    console.error(`Starting DBHub MCP Server...`);
     await server.connect(transport);
   } catch (err) {
     console.error("Fatal error:", err);
