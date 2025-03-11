@@ -52,3 +52,14 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
    pnpm build
    pnpm start
    ```
+
+### Using with [MCP Inspector](https://github.com/modelcontextprotocol/inspector)
+
+```bash
+# Start the MCP Inspector
+npx @modelcontextprotocol/inspector
+```
+
+Connect to the DBHub server `/sse` endpoint
+
+![mcp-inspector](https://raw.githubusercontent.com/bytebase/dbhub/main/assets/mcp-inspector.webp)
