@@ -152,16 +152,27 @@ async function main() {
     // Get the DSN from environment variables
     const dsn = process.env.DSN;
     
-    if (dsn) {
-      // Connect using DSN string
-      console.error(`Connecting with DSN: ${dsn}`);
-      await connectorManager.connectWithDSN(dsn);
-    } else {
-      // Use specific connector type with default or provided DSN
-      const connectorType = process.env.DB_CONNECTOR_TYPE || 'postgres';
-      console.error(`Connecting with connector type: ${connectorType}`);
-      await connectorManager.connectWithType(connectorType);
+    if (!dsn) {
+      const samples = ConnectorRegistry.getAllSampleDSNs();
+      const sampleFormats = Object.entries(samples)
+        .map(([id, dsn]) => `  - ${id}: ${dsn}`)
+        .join('\n');
+      
+      console.error(`
+ERROR: Database connection string (DSN) is required.
+Please set the DSN environment variable in your .env file or environment.
+
+Example formats:
+${sampleFormats}
+
+See documentation for more details on configuring database connections.
+`);
+      process.exit(1);
     }
+    
+    // Connect using DSN string
+    console.error(`Connecting with DSN: ${dsn}`);
+    await connectorManager.connectWithDSN(dsn);
     
     // Start the server with stdio transport
     const transport = new StdioServerTransport();
