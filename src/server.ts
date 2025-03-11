@@ -2,15 +2,44 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import express from 'express';
+import path from 'path';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
 
 import { ConnectorManager } from './connectors/manager.js';
 import { ConnectorRegistry } from './connectors/interface.js';
 import { resolveDSN, resolveTransport } from './config/env.js';
-import { SERVER_NAME, SERVER_VERSION } from './utils/package-info.js';
-import { generateBanner } from './utils/ascii-banner.js';
 import { registerResources } from './resources/index.js';
 import { registerTools } from './tools/index.js';
 import { registerPrompts } from './prompts/index.js';
+
+// Create __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load package.json to get version
+const packageJsonPath = path.join(__dirname, '..', 'package.json');
+const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+
+// Server info
+export const SERVER_NAME = "DBHub MCP Server";
+export const SERVER_VERSION = packageJson.version;
+
+/**
+ * Generate ASCII art banner with version information
+ */
+export function generateBanner(version: string): string {
+  return `
+ _____  ____  _   _       _     
+|  __ \\|  _ \\| | | |     | |    
+| |  | | |_) | |_| |_   _| |__  
+| |  | |  _ <|  _  | | | | '_ \\ 
+| |__| | |_) | | | | |_| | |_) |
+|_____/|____/|_| |_|\\__,_|_.__/ 
+                                
+v${version} - Universal Database MCP Server
+`;
+}
 
 /**
  * Initialize and start the DBHub server
