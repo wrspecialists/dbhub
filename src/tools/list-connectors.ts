@@ -1,5 +1,5 @@
 import { ConnectorManager } from '../connectors/manager.js';
-import { ConnectorRegistry } from '../interfaces/connector.js';
+import { ConnectorRegistry } from '../connectors/interface.js';
 import { createToolSuccessResponse } from '../utils/response-formatter.js';
 
 /**

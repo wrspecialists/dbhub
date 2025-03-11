@@ -1,4 +1,4 @@
-import { Connector, ConnectorRegistry } from '../interfaces/connector.js';
+import { Connector, ConnectorRegistry } from './interface.js';
 
 // Singleton instance for global access
 let managerInstance: ConnectorManager | null = null;

@@ -4,7 +4,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import express from 'express';
 
 import { ConnectorManager } from './connectors/manager.js';
-import { ConnectorRegistry } from './interfaces/connector.js';
+import { ConnectorRegistry } from './connectors/interface.js';
 import { resolveDSN, resolveTransport } from './config/env.js';
 import { SERVER_NAME, SERVER_VERSION } from './utils/package-info.js';
 import { generateBanner } from './utils/ascii-banner.js';

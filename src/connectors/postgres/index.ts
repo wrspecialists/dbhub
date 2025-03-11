@@ -1,6 +1,6 @@
 import pg from 'pg';
 const { Pool } = pg;
-import { Connector, ConnectorRegistry, DSNParser, QueryResult, TableColumn } from '../../interfaces/connector.js';
+import { Connector, ConnectorRegistry, DSNParser, QueryResult, TableColumn } from '../interface.js';
 
 /**
  * PostgreSQL DSN Parser

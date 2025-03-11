@@ -8,7 +8,7 @@
  * 3. Set DSN=sqlite:///path/to/database.db in your .env file
  */
 
-import { Connector, ConnectorRegistry, DSNParser, QueryResult, TableColumn } from '../../interfaces/connector.js';
+import { Connector, ConnectorRegistry, DSNParser, QueryResult, TableColumn } from '../interface.js';
 
 /**
  * SQLite DSN Parser
