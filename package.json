@@ -1,7 +1,7 @@
 {
-  "name": "pg-schema-explorer",
+  "name": "dbhub",
   "version": "1.0.0",
-  "description": "PostgreSQL Schema Explorer MCP Server",
+  "description": "DbHub MCP Server",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
@@ -35,5 +35,7 @@
     "outDir": "dist",
     "rootDir": "src"
   },
-  "include": ["src/**/*"]
+  "include": [
+    "src/**/*"
+  ]
 }
