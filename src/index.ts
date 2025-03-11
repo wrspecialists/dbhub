@@ -150,7 +150,7 @@ server.tool(
 async function main() {
   try {
     // Get the DSN from environment variables
-    const dsn = process.env.DB_DSN;
+    const dsn = process.env.DSN;
     
     if (dsn) {
       // Connect using DSN string

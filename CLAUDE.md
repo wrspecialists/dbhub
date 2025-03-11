@@ -10,7 +10,7 @@
 
 - Copy `.env.example` to `.env` and configure for your database connection
 - Two ways to configure:
-  - Set `DB_DSN` to a full connection string (recommended)
+  - Set `DSN` to a full connection string (recommended)
   - Set `DB_CONNECTOR_TYPE` to select a connector with its default DSN
 
 ## Database Connectors

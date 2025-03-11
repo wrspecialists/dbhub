@@ -5,7 +5,7 @@
  * To use this connector:
  * 1. Install the required dependencies: npm install sqlite3
  * 2. Implement the methods below
- * 3. Set DB_DSN=sqlite:///path/to/database.db in your .env file
+ * 3. Set DSN=sqlite:///path/to/database.db in your .env file
  */
 
 import { Connector, ConnectorRegistry, DSNParser, QueryResult, TableColumn } from '../../interfaces/connector.js';
