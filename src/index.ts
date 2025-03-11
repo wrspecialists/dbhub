@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { parseArgs } from 'node:util';
 
 // Import connector modules
 import './connectors/postgres/index.js';  // Register PostgreSQL connector
@@ -24,6 +25,7 @@ const envPaths = [
   path.join(process.cwd(), '.env')             // Explicit current working directory
 ];
 
+// Try to load .env file from various locations
 let envLoaded = false;
 for (const envPath of envPaths) {
   if (fs.existsSync(envPath)) {
@@ -34,9 +36,14 @@ for (const envPath of envPaths) {
   }
 }
 
-if (!envLoaded) {
-  console.error("Warning: No .env file found. Using default or environment variables.");
-}
+// Note: If no .env file is found, we'll check command line args and environment variables later
+
+// Parse command line arguments
+const { values } = parseArgs({
+  options: {
+    dsn: { type: 'string' }
+  }
+});
 
 // Get database connection info
 const connectorManager = new ConnectorManager();
@@ -149,8 +156,8 @@ server.tool(
 // Start the server
 async function main() {
   try {
-    // Get the DSN from environment variables
-    const dsn = process.env.DSN;
+    // Get the DSN from command line argument or environment variable
+    const dsn = values.dsn || process.env.DSN;
     
     if (!dsn) {
       const samples = ConnectorRegistry.getAllSampleDSNs();
@@ -160,7 +167,11 @@ async function main() {
       
       console.error(`
 ERROR: Database connection string (DSN) is required.
-Please set the DSN environment variable in your .env file or environment.
+Please provide the DSN in one of these ways:
+
+1. Command line argument: --dsn="your-connection-string"
+2. Environment variable: export DSN="your-connection-string"
+3. .env file: DSN=your-connection-string
 
 Example formats:
 ${sampleFormats}
