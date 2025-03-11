@@ -9,6 +9,7 @@ import { SERVER_NAME, SERVER_VERSION } from './utils/package-info.js';
 import { generateBanner } from './utils/ascii-banner.js';
 import { registerResources } from './routes/index.js';
 import { registerTools } from './tools/index.js';
+import { registerPrompts } from './prompts/index.js';
 
 /**
  * Initialize and start the DBHub server
@@ -46,9 +47,10 @@ See documentation for more details on configuring database connections.
       version: SERVER_VERSION
     });
     
-    // Register resources and tools
+    // Register resources, tools, and prompts
     registerResources(server);
     registerTools(server);
+    registerPrompts(server);
     
     // Create connector manager and connect to database
     const connectorManager = new ConnectorManager();

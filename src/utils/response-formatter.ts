@@ -1,5 +1,6 @@
 /**
  * Response formatter utility for consistent API responses
+ * Provides formatting for resources, tools, and prompts
  */
 
 /**
@@ -84,5 +85,61 @@ export function createResourceSuccessResponse<T>(uri: string, data: T, meta: Rec
       text: JSON.stringify(formatSuccessResponse(data, meta), null, 2),
       mimeType: "application/json"
     }]
+  };
+}
+
+/**
+ * Format a successful prompt response in the MCP format
+ */
+export function formatPromptSuccessResponse(text: string, references: string[] = []): {
+  messages: Array<{
+    role: 'assistant';
+    content: {
+      type: 'text';
+      text: string;
+    };
+  }>;
+  references?: string[];
+} {
+  return {
+    messages: [
+      {
+        role: 'assistant',
+        content: {
+          type: 'text',
+          text
+        }
+      }
+    ],
+    ...(references.length > 0 ? { references } : {})
+  };
+}
+
+/**
+ * Format an error prompt response in the MCP format
+ */
+export function formatPromptErrorResponse(error: string, code: string = 'ERROR'): {
+  messages: Array<{
+    role: 'assistant';
+    content: {
+      type: 'text';
+      text: string;
+    };
+  }>;
+  error: string;
+  code: string;
+} {
+  return {
+    messages: [
+      {
+        role: 'assistant',
+        content: {
+          type: 'text',
+          text: `Error: ${error}`
+        }
+      }
+    ],
+    error,
+    code
   };
 }
