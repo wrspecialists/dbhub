@@ -1,6 +1,58 @@
 import pg from 'pg';
 const { Pool } = pg;
-import { Connector, ConnectorRegistry, QueryResult, TableColumn } from '../../interfaces/connector.js';
+import { Connector, ConnectorRegistry, DSNParser, QueryResult, TableColumn } from '../../interfaces/connector.js';
+
+/**
+ * PostgreSQL DSN Parser
+ * Handles DSN strings like: postgres://user:password@localhost:5432/dbname?sslmode=disable
+ */
+class PostgresDSNParser implements DSNParser {
+  parse(dsn: string): pg.PoolConfig {
+    // Basic validation
+    if (!this.isValidDSN(dsn)) {
+      throw new Error(`Invalid PostgreSQL DSN: ${dsn}`);
+    }
+
+    try {
+      // For PostgreSQL, we can actually pass the DSN directly to the Pool constructor
+      // But we'll parse it here for consistency and to extract components if needed
+      const url = new URL(dsn);
+      
+      const config: pg.PoolConfig = {
+        host: url.hostname,
+        port: url.port ? parseInt(url.port) : 5432,
+        database: url.pathname.substring(1), // Remove leading '/'
+        user: url.username,
+        password: url.password,
+      };
+      
+      // Handle query parameters (like sslmode, etc.)
+      url.searchParams.forEach((value, key) => {
+        if (key === 'sslmode') {
+          config.ssl = value !== 'disable';
+        }
+        // Add other parameters as needed
+      });
+      
+      return config;
+    } catch (error) {
+      throw new Error(`Failed to parse PostgreSQL DSN: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  getSampleDSN(): string {
+    return 'postgres://postgres:password@localhost:5432/postgres?sslmode=disable';
+  }
+
+  isValidDSN(dsn: string): boolean {
+    try {
+      const url = new URL(dsn);
+      return url.protocol === 'postgres:' || url.protocol === 'postgresql:';
+    } catch (error) {
+      return false;
+    }
+  }
+}
 
 /**
  * PostgreSQL Connector Implementation
@@ -8,28 +60,19 @@ import { Connector, ConnectorRegistry, QueryResult, TableColumn } from '../../in
 export class PostgresConnector implements Connector {
   id = 'postgres';
   name = 'PostgreSQL';
+  dsnParser = new PostgresDSNParser();
   
-  private pool: pg.Pool;
-  private connected = false;
+  private pool: pg.Pool | null = null;
 
-  constructor(
-    private config: {
-      host: string;
-      port: number;
-      user: string;
-      password: string;
-      database: string;
-    }
-  ) {
-    this.pool = new Pool(config);
-  }
-
-  async connect(): Promise<void> {
+  async connect(dsn: string): Promise<void> {
     try {
+      const config = this.dsnParser.parse(dsn);
+      this.pool = new Pool(config);
+      
+      // Test the connection
       const client = await this.pool.connect();
       console.error("Successfully connected to PostgreSQL database");
       client.release();
-      this.connected = true;
     } catch (err) {
       console.error("Failed to connect to PostgreSQL database:", err);
       throw err;
@@ -37,11 +80,17 @@ export class PostgresConnector implements Connector {
   }
 
   async disconnect(): Promise<void> {
-    await this.pool.end();
-    this.connected = false;
+    if (this.pool) {
+      await this.pool.end();
+      this.pool = null;
+    }
   }
 
   async getTables(): Promise<string[]> {
+    if (!this.pool) {
+      throw new Error('Not connected to database');
+    }
+    
     const client = await this.pool.connect();
     try {
       const result = await client.query(`
@@ -58,6 +107,10 @@ export class PostgresConnector implements Connector {
   }
 
   async tableExists(tableName: string): Promise<boolean> {
+    if (!this.pool) {
+      throw new Error('Not connected to database');
+    }
+    
     const client = await this.pool.connect();
     try {
       const result = await client.query(`
@@ -75,6 +128,10 @@ export class PostgresConnector implements Connector {
   }
 
   async getTableSchema(tableName: string): Promise<TableColumn[]> {
+    if (!this.pool) {
+      throw new Error('Not connected to database');
+    }
+    
     const client = await this.pool.connect();
     try {
       // Get table columns
@@ -97,6 +154,10 @@ export class PostgresConnector implements Connector {
   }
 
   async executeQuery(query: string): Promise<QueryResult> {
+    if (!this.pool) {
+      throw new Error('Not connected to database');
+    }
+    
     const safetyCheck = this.validateQuery(query);
     if (!safetyCheck.isValid) {
       throw new Error(safetyCheck.message || "Query validation failed");
@@ -123,18 +184,6 @@ export class PostgresConnector implements Connector {
   }
 }
 
-/**
- * Factory function to create a PostgreSQL connector from environment variables
- */
-export function createPostgresConnector(): Connector {
-  return new PostgresConnector({
-    host: process.env.PG_HOST || 'localhost',
-    port: parseInt(process.env.PG_PORT || '5432'),
-    user: process.env.PG_USER || 'postgres',
-    password: process.env.PG_PASSWORD || '',
-    database: process.env.PG_DATABASE || 'postgres',
-  });
-}
-
-// Register the PostgreSQL connector with the registry
-ConnectorRegistry.register('postgres', createPostgresConnector);
+// Create and register the connector
+const postgresConnector = new PostgresConnector();
+ConnectorRegistry.register(postgresConnector);

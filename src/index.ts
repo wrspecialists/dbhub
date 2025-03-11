@@ -8,7 +8,9 @@ import { fileURLToPath } from 'url';
 
 // Import connector modules
 import './connectors/postgres/index.js';  // Register PostgreSQL connector
+// import './connectors/sqlite/index.js';  // Uncomment to enable SQLite
 import { ConnectorManager } from './connectors/manager.js';
+import { ConnectorRegistry } from './interfaces/connector.js';
 
 // Create __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -36,9 +38,8 @@ if (!envLoaded) {
   console.error("Warning: No .env file found. Using default or environment variables.");
 }
 
-// Determine which database connector to use from environment variables
-const connectorType = process.env.DB_CONNECTOR_TYPE || 'postgres';
-const connectorManager = new ConnectorManager(connectorType);
+// Get database connection info
+const connectorManager = new ConnectorManager();
 
 // Create MCP server
 const server = new McpServer({
@@ -130,11 +131,16 @@ server.tool(
   {},
   async () => {
     const connectors = ConnectorManager.getAvailableConnectors();
+    const samples = ConnectorRegistry.getAllSampleDSNs();
+    
+    const formattedSamples = Object.entries(samples)
+      .map(([id, dsn]) => `${id}: ${dsn}`)
+      .join('\n');
     
     return {
       content: [{ 
         type: "text", 
-        text: `Available database connectors:\n\n${connectors.join('\n')}`
+        text: `Available database connectors:\n\n${formattedSamples}`
       }]
     };
   }
@@ -143,12 +149,23 @@ server.tool(
 // Start the server
 async function main() {
   try {
-    // Initialize the database connector
-    await connectorManager.initialize();
+    // Get the DSN from environment variables
+    const dsn = process.env.DB_DSN;
+    
+    if (dsn) {
+      // Connect using DSN string
+      console.error(`Connecting with DSN: ${dsn}`);
+      await connectorManager.connectWithDSN(dsn);
+    } else {
+      // Use specific connector type with default or provided DSN
+      const connectorType = process.env.DB_CONNECTOR_TYPE || 'postgres';
+      console.error(`Connecting with connector type: ${connectorType}`);
+      await connectorManager.connectWithType(connectorType);
+    }
     
     // Start the server with stdio transport
     const transport = new StdioServerTransport();
-    console.error(`Starting DBHub MCP Server with ${connectorType} connector...`);
+    console.error(`Starting DBHub MCP Server...`);
     await server.connect(transport);
   } catch (err) {
     console.error("Fatal error:", err);

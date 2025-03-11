@@ -8,8 +8,19 @@
 
 ## Environment
 
-- Copy `.env.example` to `.env` and configure for your PostgreSQL instance
-- Default connection parameters can be seen in src/index.ts
+- Copy `.env.example` to `.env` and configure for your database connection
+- Two ways to configure:
+  - Set `DB_DSN` to a full connection string (recommended)
+  - Set `DB_CONNECTOR_TYPE` to select a connector with its default DSN
+
+## Database Connectors
+
+- Add new connectors in `src/connectors/{db-type}/index.ts`
+- Implement the `Connector` and `DSNParser` interfaces from `src/interfaces/connector.ts`
+- Register connector with `ConnectorRegistry.register(connector)`
+- DSN Examples:
+  - PostgreSQL: `postgres://user:password@localhost:5432/dbname`
+  - SQLite: `sqlite:///path/to/database.db`
 
 ## Code Style
 

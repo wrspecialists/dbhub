@@ -5,26 +5,81 @@
  * To use this connector:
  * 1. Install the required dependencies: npm install sqlite3
  * 2. Implement the methods below
- * 3. Set DB_CONNECTOR_TYPE=sqlite in your .env file
+ * 3. Set DB_DSN=sqlite:///path/to/database.db in your .env file
  */
 
-import { Connector, ConnectorRegistry, QueryResult, TableColumn } from '../../interfaces/connector.js';
+import { Connector, ConnectorRegistry, DSNParser, QueryResult, TableColumn } from '../../interfaces/connector.js';
+
+/**
+ * SQLite DSN Parser
+ * Handles DSN strings like: 
+ * - sqlite:///path/to/database.db (absolute path)
+ * - sqlite://./relative/path/to/database.db (relative path)
+ * - sqlite::memory: (in-memory database)
+ */
+class SQLiteDSNParser implements DSNParser {
+  parse(dsn: string): { dbPath: string } {
+    // Basic validation
+    if (!this.isValidDSN(dsn)) {
+      throw new Error(`Invalid SQLite DSN: ${dsn}`);
+    }
+
+    try {
+      const url = new URL(dsn);
+      let dbPath: string;
+      
+      // Handle in-memory database
+      if (url.hostname === '' && url.pathname === ':memory:') {
+        dbPath = ':memory:';
+      } 
+      // Handle file paths
+      else {
+        // Get the path part, handling both relative and absolute paths
+        if (url.pathname.startsWith('//')) {
+          // Absolute path: sqlite:///path/to/db.sqlite
+          dbPath = url.pathname.substring(2); // Remove leading //
+        } else {
+          // Relative path: sqlite://./path/to/db.sqlite
+          dbPath = url.pathname;
+        }
+      }
+      
+      return { dbPath };
+    } catch (error) {
+      throw new Error(`Failed to parse SQLite DSN: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  getSampleDSN(): string {
+    return 'sqlite:///path/to/database.db';
+  }
+
+  isValidDSN(dsn: string): boolean {
+    try {
+      const url = new URL(dsn);
+      return url.protocol === 'sqlite:';
+    } catch (error) {
+      return false;
+    }
+  }
+}
 
 export class SQLiteConnector implements Connector {
   id = 'sqlite';
   name = 'SQLite';
+  dsnParser = new SQLiteDSNParser();
   
-  private dbPath: string;
   private db: any; // This would be the SQLite connection
+  private dbPath: string | null = null;
 
-  constructor(config: { dbPath: string }) {
+  async connect(dsn: string): Promise<void> {
+    const config = this.dsnParser.parse(dsn);
     this.dbPath = config.dbPath;
-  }
-
-  async connect(): Promise<void> {
+    
     // Example implementation (requires sqlite3 package)
     /*
     return new Promise((resolve, reject) => {
+      const sqlite3 = require('sqlite3').verbose();
       this.db = new sqlite3.Database(this.dbPath, (err) => {
         if (err) {
           console.error("Failed to connect to SQLite database:", err);
@@ -160,14 +215,6 @@ export class SQLiteConnector implements Connector {
   }
 }
 
-/**
- * Factory function to create a SQLite connector from environment variables
- */
-export function createSQLiteConnector(): Connector {
-  return new SQLiteConnector({
-    dbPath: process.env.SQLITE_DB_PATH || ':memory:',
-  });
-}
-
-// Uncomment this line to register the SQLite connector with the registry
-// ConnectorRegistry.register('sqlite', createSQLiteConnector);
+// To enable this connector, uncomment the following lines and install sqlite3:
+// const sqliteConnector = new SQLiteConnector();
+// ConnectorRegistry.register(sqliteConnector);
