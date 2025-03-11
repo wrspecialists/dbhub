@@ -17,45 +17,46 @@ import { ConnectorRegistry } from './interfaces/connector.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Determine if we're in development or production mode
-const isDevelopment = process.env.NODE_ENV === 'development' || process.argv[1]?.includes('tsx');
-
-// Select environment file names based on environment
-const envFileNames = isDevelopment 
-  ? ['.env.local', '.env'] // In development, try .env.local first, then .env
-  : ['.env']; // In production, only look for .env
-
-// Build paths to check for environment files
-const envPaths = [];
-for (const fileName of envFileNames) {
-  envPaths.push(
-    fileName, // Current working directory
-    path.join(__dirname, fileName), // Same directory as the script
-    path.join(__dirname, '..', fileName), // Parent directory (for compiled code)
-    path.join(process.cwd(), fileName) // Explicit current working directory
-  );
-}
-
-// Try to load the first env file found from the prioritized locations
-let envLoaded = false;
-for (const envPath of envPaths) {
-  console.error(`Checking for env file: ${envPath}`);
-  if (fs.existsSync(envPath)) {
-    console.error(`Found and loading environment from: ${envPath}`);
-    dotenv.config({ path: envPath });
-    envLoaded = true;
-    break;
-  }
-}
-
-// Note: If no env file is found, we'll check command line args and environment variables directly
-
-// Parse command line arguments
+// Parse command line arguments first
 const { values } = parseArgs({
   options: {
     dsn: { type: 'string' }
   }
 });
+
+// Function to load environment files
+function loadEnvFiles(): string | null {
+  // Determine if we're in development or production mode
+  const isDevelopment = process.env.NODE_ENV === 'development' || process.argv[1]?.includes('tsx');
+
+  // Select environment file names based on environment
+  const envFileNames = isDevelopment 
+    ? ['.env.local', '.env'] // In development, try .env.local first, then .env
+    : ['.env']; // In production, only look for .env
+
+  // Build paths to check for environment files
+  const envPaths = [];
+  for (const fileName of envFileNames) {
+    envPaths.push(
+      fileName, // Current working directory
+      path.join(__dirname, fileName), // Same directory as the script
+      path.join(__dirname, '..', fileName), // Parent directory (for compiled code)
+      path.join(process.cwd(), fileName) // Explicit current working directory
+    );
+  }
+
+  // Try to load the first env file found from the prioritized locations
+  for (const envPath of envPaths) {
+    console.info(`Checking for env file: ${envPath}`);
+    if (fs.existsSync(envPath)) {
+      dotenv.config({ path: envPath });
+      // Return the name of the file that was loaded
+      return path.basename(envPath);
+    }
+  }
+  
+  return null;
+}
 
 // Get database connection info
 const connectorManager = new ConnectorManager();
@@ -168,8 +169,27 @@ server.tool(
 // Start the server
 async function main() {
   try {
-    // Get the DSN from command line argument or environment variable
-    const dsn = values.dsn || process.env.DSN;
+    // Get DSN with strict priority: Command line > Environment variable > .env files
+    let dsn: string | undefined;
+    
+    // 1. Check command line arguments first (highest priority)
+    if (values.dsn) {
+      dsn = values.dsn;
+      console.info('Using DSN from command line argument');
+    }
+    // 2. Check environment variables if no command line argument (but before loading .env)
+    else if (process.env.DSN) {
+      dsn = process.env.DSN;
+      console.info('Using DSN from environment variable');
+    }
+    // 3. If no command line or environment variable, try loading from .env files
+    else {
+      const loadedEnvFile = loadEnvFiles();
+      if (loadedEnvFile && process.env.DSN) {
+        dsn = process.env.DSN;
+        console.info(`Using DSN from ${loadedEnvFile} file`);
+      }
+    }
     
     if (!dsn) {
       const samples = ConnectorRegistry.getAllSampleDSNs();
@@ -179,7 +199,7 @@ async function main() {
       
       console.error(`
 ERROR: Database connection string (DSN) is required.
-Please provide the DSN in one of these ways:
+Please provide the DSN in one of these ways (in order of priority):
 
 1. Command line argument: --dsn="your-connection-string"
 2. Environment variable: export DSN="your-connection-string"
@@ -194,12 +214,12 @@ See documentation for more details on configuring database connections.
     }
     
     // Connect using DSN string
-    console.error(`Connecting with DSN: ${dsn}`);
+    console.info(`Connecting with DSN: ${dsn}`);
     await connectorManager.connectWithDSN(dsn);
     
     // Start the server with stdio transport
     const transport = new StdioServerTransport();
-    console.error(`Starting DBHub MCP Server...`);
+    console.info(`Starting DBHub MCP Server...`);
     await server.connect(transport);
   } catch (err) {
     console.error("Fatal error:", err);

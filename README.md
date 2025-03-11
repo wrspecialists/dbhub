@@ -17,18 +17,37 @@ DBHub is a universal server implementing the Model Context Protocol (MCP) interf
    pnpm install
    ```
 
-2. Configure environment:
+1. Configure your database connection:
 
-   - Copy `.env.example` to `.env`
-   - Edit with your PostgreSQL connection details
+   DBHub requires a Database Source Name (DSN) to connect to your database. You can provide this in several ways:
 
-3. Run in development mode:
+   - **Command line argument** (highest priority):
+
+     ```bash
+     pnpm dev --dsn="postgres://user:password@localhost:5432/dbname?sslmode=disable"
+     ```
+
+   - **Environment variable** (second priority):
+
+     ```bash
+     export DSN="postgres://user:password@localhost:5432/dbname?sslmode=disable"
+     pnpm dev
+     ```
+
+   - **Environment file** (third priority):
+     - For development: Create `.env.local` with your DSN
+     - For production: Create `.env` with your DSN
+     ```
+     DSN=postgres://user:password@localhost:5432/dbname?sslmode=disable
+     ```
+
+1. Run in development mode:
 
    ```bash
    pnpm dev
    ```
 
-4. Build for production:
+1. Build for production:
    ```bash
    pnpm build
    pnpm start
