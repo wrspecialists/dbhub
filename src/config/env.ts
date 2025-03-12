@@ -2,7 +2,6 @@ import dotenv from "dotenv";
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { parseArgs } from 'node:util';
 
 // Create __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -32,22 +31,8 @@ export function parseCommandLineArgs() {
     }
   }
   
-  // Also try parseArgs for normal node execution
-  try {
-    const { values } = parseArgs({
-      options: {
-        dsn: { type: 'string' },
-        transport: { type: 'string' },
-        port: { type: 'string' }
-      }
-    });
-    
-    // Merge both results, with manually parsed taking precedence
-    return { ...values, ...parsedManually };
-  } catch (err) {
-    // If parseArgs fails, just return the manually parsed args
-    return parsedManually;
-  }
+  // Just use the manually parsed args - removed parseArgs dependency for Node.js <18.3.0 compatibility
+  return parsedManually;
 }
 
 /**
