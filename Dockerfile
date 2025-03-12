@@ -41,4 +41,4 @@ EXPOSE 8080
 ENV NODE_ENV=production
 
 # Run the server
-CMD ["pnpm", "start"]
+ENTRYPOINT ["node", "dist/index.js"]
