@@ -3,7 +3,7 @@ import { ConnectorRegistry } from '../connectors/interface.js';
 import { createToolSuccessResponse } from '../utils/response-formatter.js';
 
 /**
- * List-connectors tool handler
+ * list_connectors tool handler
  * Lists all available database connectors and their sample DSNs
  */
 export async function listConnectorsToolHandler(_args: {}, _extra: any) {

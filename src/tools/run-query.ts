@@ -2,13 +2,13 @@ import { z } from "zod";
 import { ConnectorManager } from '../connectors/manager.js';
 import { createToolSuccessResponse, createToolErrorResponse } from '../utils/response-formatter.js';
 
-// Schema for run-query tool
+// Schema for run_query tool
 export const runQuerySchema = { 
   query: z.string().describe("SQL query to execute (SELECT only)")
 };
 
 /**
- * Run-query tool handler
+ * run_query tool handler
  * Executes a SQL query and returns the results
  */
 export async function runQueryToolHandler({ query }: { query: string }, _extra: any) {

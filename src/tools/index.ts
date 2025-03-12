@@ -8,14 +8,14 @@ import { listConnectorsToolHandler } from './list-connectors.js';
 export function registerTools(server: McpServer): void {
   // Tool to run a SQL query (read-only for safety)
   server.tool(
-    "run-query",
+    "run_query",
     runQuerySchema,
     runQueryToolHandler
   );
 
   // Tool to list available database connectors
   server.tool(
-    "list-connectors",
+    "list_connectors",
     {},
     listConnectorsToolHandler
   );
