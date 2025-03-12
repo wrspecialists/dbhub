@@ -33,7 +33,7 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
 - Run read-only SQL queries against the database
 - Safety checks to prevent dangerous queries
 
-## Usage
+## Installation
 
 ### Docker
 
@@ -47,9 +47,27 @@ docker run --rm --init \
    --dsn "postgres://user:password@localhost:5432/dbname?sslmode=disable"
 ```
 
+### NPM
+
+```bash
+# Install latest stable version globally
+npm install -g @bytebase/dbhub
+
+# Or install development version
+npm install -g @bytebase/dbhub@dev
+
+# Run from anywhere
+dbhub --dsn="postgres://user:password@localhost:5432/dbname"
+
+# Run via npx
+npx @bytebase/dbhub --dsn="postgres://user:password@localhost:5432/dbname"
+```
+
+## Usage
+
 ### Configure your database connection
 
-DBHub requires a Database Source Name (DSN) to connect to your database. You can provide this in several ways:
+Database Source Name (DSN) is required to connect to your database. You can provide this in several ways:
 
 - **Command line argument** (highest priority):
 
@@ -87,7 +105,7 @@ DBHub requires a Database Source Name (DSN) to connect to your database. You can
 ### Command line options
 
 | Option    | Description                                                     | Default                             |
-| --------- | --------------------------------------------------------------- | ----------------------------------- |
+| :-------- | :-------------------------------------------------------------- | :---------------------------------- |
 | dsn       | Database connection string                                      | Required if not set via environment |
 | transport | Transport mode: `stdio` or `sse`                                | `stdio`                             |
 | port      | HTTP server port (only applicable when using `--transport=sse`) | `8080`                              |

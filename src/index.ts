@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // Import connector modules to register them
 import './connectors/postgres/index.js';  // Register PostgreSQL connector
 // import './connectors/sqlite/index.js';  // Uncomment to enable SQLite
