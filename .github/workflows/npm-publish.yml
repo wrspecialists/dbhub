@@ -3,7 +3,7 @@ name: Publish to npm
 on:
   push:
     branches:
-      - main  # Run when a push is made to the main branch
+      - main # Run when a push is made to the main branch
 
 jobs:
   build-and-publish:
@@ -15,9 +15,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          registry-url: 'https://registry.npmjs.org/'
-          scope: '@bytebase'
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org/"
+          scope: "@bytebase"
 
       - name: Install pnpm
         uses: pnpm/action-setup@v3
@@ -34,20 +34,19 @@ jobs:
         run: |
           # Get the current version from package.json
           CURRENT_VERSION=$(jq -r '.version' package.json)
-          
-          # Generate a version with date and commit hash suffix
-          COMMIT_HASH=$(git rev-parse --short HEAD)
+
+          # Generate a version with date
           DATE_VERSION=$(date +'%Y%m%d')
-          VERSION="${CURRENT_VERSION}-${DATE_VERSION}.${COMMIT_HASH}"
-          
+          VERSION="${CURRENT_VERSION}-${DATE_VERSION}"
+
           # Update package.json to use @bytebase scope and set version
           jq --arg version "$VERSION" '.name = "@bytebase/dbhub" | .version = $version' package.json > package.json.tmp
           mv package.json.tmp package.json
-          
+
           # Set files to include in the package
           jq '.files = ["dist/**/*", "LICENSE", "README.md"]' package.json > package.json.tmp
           mv package.json.tmp package.json
-          
+
           # Add bin entry for CLI usage
           jq '.bin = {"dbhub": "dist/index.js"}' package.json > package.json.tmp 
           mv package.json.tmp package.json
