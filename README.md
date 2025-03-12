@@ -6,7 +6,6 @@
 </a>
 </p>
 
-
 DBHub is a universal database gateway implementing the Model Context Protocol (MCP) server interface. This gateway allows MCP-compatible client to connect to and explore different databases.
 
 ```bash
@@ -25,7 +24,7 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
  |                  |    |              |    |                  |
  +------------------+    +--------------+    +------------------+
       MCP Clients           MCP Server             Databases
- ```
+```
 
 ## Features
 
@@ -39,6 +38,26 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
 ### Claude Desktop
 
 ![claude-desktop](https://raw.githubusercontent.com/bytebase/dbhub/main/assets/claude-desktop.webp)
+
+Add to `claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "bytebase/dbhub",
+        "--dsn",
+        "postgresql://host.docker.internal:postgres:5432/bytebase"
+      ]
+    }
+  }
+}
+```
 
 ## Development
 
@@ -55,7 +74,7 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
    - **Command line argument** (highest priority):
 
      ```bash
-     pnpm dev --dsn="postgres://user:password@localhost:5432/dbname?sslmode=disable"
+     pnpm dev --dsn "postgres://user:password@localhost:5432/dbname?sslmode=disable"
      ```
 
    - **Environment variable** (second priority):
@@ -75,15 +94,16 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
 1. Choose a transport mode:
 
    DBHub supports two transport modes:
-   
+
    - **stdio** (default) - for direct integration with tools like Claude Desktop
+
      ```bash
-     pnpm dev --transport=stdio
+     pnpm dev --transport stdio
      ```
-   
+
    - **sse** - for browser and network clients
      ```bash
-     pnpm dev --transport=sse
+     pnpm dev --transport sse
      ```
 
 1. Run in development mode:
@@ -95,7 +115,7 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
 1. Build for production:
    ```bash
    pnpm build
-   pnpm start --transport=stdio --dsn="postgres://user:password@localhost:5432/dbname?sslmode=disable"
+   pnpm start --transport stdio --dsn "postgres://user:password@localhost:5432/dbname?sslmode=disable"
    ```
 
 ### Debug with [MCP Inspector](https://github.com/modelcontextprotocol/inspector)
@@ -110,7 +130,7 @@ TRANSPORT=stdio DSN="postgres://user:password@localhost:5432/dbname?sslmode=disa
 
 ```bash
 # Start DBHub with SSE transport
-pnpm dev --transport=sse 
+pnpm dev --transport=sse
 
 # Start the MCP Inspector in another terminal
 npx @modelcontextprotocol/inspector
