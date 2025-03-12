@@ -35,9 +35,8 @@ jobs:
           # Get the current version from package.json
           CURRENT_VERSION=$(jq -r '.version' package.json)
 
-          # Generate a version with date
-          DATE_VERSION=$(date +'%Y%m%d')
-          VERSION="${CURRENT_VERSION}-${DATE_VERSION}"
+          # Generate a version
+          VERSION="${CURRENT_VERSION}"
 
           # Update package.json to use @bytebase scope and set version
           jq --arg version "$VERSION" '.name = "@bytebase/dbhub" | .version = $version' package.json > package.json.tmp
