@@ -35,6 +35,51 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
 
 ## Usage
 
+### Configure your database connection
+
+DBHub requires a Database Source Name (DSN) to connect to your database. You can provide this in several ways:
+
+- **Command line argument** (highest priority):
+
+  ```bash
+  pnpm dev --dsn "postgres://user:password@localhost:5432/dbname?sslmode=disable"
+  ```
+
+- **Environment variable** (second priority):
+
+  ```bash
+  export DSN="postgres://user:password@localhost:5432/dbname?sslmode=disable"
+  pnpm dev
+  ```
+
+- **Environment file** (third priority):
+  - For development: Create `.env.local` with your DSN
+  - For production: Create `.env` with your DSN
+  ```
+  DSN=postgres://user:password@localhost:5432/dbname?sslmode=disable
+  ```
+
+### Transport
+
+- **stdio** (default) - for direct integration with tools like Claude Desktop:
+
+  ```bash
+  npx @bytebase/dbhub --transport stdio --dsn "postgres://user:password@localhost:5432/dbname?sslmode=disable"
+  ```
+
+- **sse** - for browser and network clients:
+  ```bash
+  npx @bytebase/dbhub --transport sse --port 5678 --dsn "postgres://user:password@localhost:5432/dbname?sslmode=disable"
+  ```
+
+### Command line options
+
+| Option    | Description                                                     | Default                             |
+| --------- | --------------------------------------------------------------- | ----------------------------------- |
+| dsn       | Database connection string                                      | Required if not set via environment |
+| transport | Transport mode: `stdio` or `sse`                                | `stdio`                             |
+| port      | HTTP server port (only applicable when using `--transport=sse`) | `8080`                              |
+
 ### Claude Desktop
 
 ![claude-desktop](https://raw.githubusercontent.com/bytebase/dbhub/main/assets/claude-desktop.webp)
@@ -67,45 +112,6 @@ Add to `claude_desktop_config.json`
    pnpm install
    ```
 
-1. Configure your database connection:
-
-   DBHub requires a Database Source Name (DSN) to connect to your database. You can provide this in several ways:
-
-   - **Command line argument** (highest priority):
-
-     ```bash
-     pnpm dev --dsn "postgres://user:password@localhost:5432/dbname?sslmode=disable"
-     ```
-
-   - **Environment variable** (second priority):
-
-     ```bash
-     export DSN="postgres://user:password@localhost:5432/dbname?sslmode=disable"
-     pnpm dev
-     ```
-
-   - **Environment file** (third priority):
-     - For development: Create `.env.local` with your DSN
-     - For production: Create `.env` with your DSN
-     ```
-     DSN=postgres://user:password@localhost:5432/dbname?sslmode=disable
-     ```
-
-1. Choose a transport mode:
-
-   DBHub supports two transport modes:
-
-   - **stdio** (default) - for direct integration with tools like Claude Desktop
-
-     ```bash
-     pnpm dev --transport stdio
-     ```
-
-   - **sse** - for browser and network clients
-     ```bash
-     pnpm dev --transport sse
-     ```
-
 1. Run in development mode:
 
    ```bash
@@ -130,7 +136,7 @@ TRANSPORT=stdio DSN="postgres://user:password@localhost:5432/dbname?sslmode=disa
 
 ```bash
 # Start DBHub with SSE transport
-pnpm dev --transport=sse
+pnpm dev --transport=sse --port=8080
 
 # Start the MCP Inspector in another terminal
 npx @modelcontextprotocol/inspector
