@@ -1,6 +1,19 @@
+# Workflow for publishing the DBHub package to npm
+# This workflow has two trigger modes:
+#
+# 1. Manual trigger (workflow_dispatch):
+#    - Allows manually specifying version and tag
+#    - Useful for deliberate releases
+#
+# 2. Automatic trigger (on push to main branch that modifies package.json):
+#    - Detects if the version has changed
+#    - Automatically determines the appropriate npm tag based on version format
+#    - Skips publishing if the version already exists on npm
+
 name: Publish to npm
 
 on:
+  # Manual trigger with customizable version and tag
   workflow_dispatch:
     inputs:
       version:
@@ -11,59 +24,131 @@ on:
         description: "NPM tag (e.g., latest, dev)"
         required: false
         default: "dev"
+  
+  # Automatic trigger when package.json changes in main branch
+  push:
+    branches:
+      - main
+    paths:
+      - 'package.json'
 
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
     steps:
+      # Checkout the repository to get access to the code
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Set up Node.js with npm registry configuration
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          registry-url: "https://registry.npmjs.org/"
-          scope: "@bytebase"
+          registry-url: "https://registry.npmjs.org/" # Use the public npm registry
+          scope: "@bytebase"                          # Set the npm scope for publishing
 
+      # Install pnpm for faster and more reliable package management
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
           version: latest
 
+      # Install project dependencies
       - name: Install dependencies
         run: pnpm install
 
+      # Build the project (compile TypeScript to JavaScript)
       - name: Build
         run: pnpm run build
 
-      - name: Update package.json for npm publishing
+      # Determine if we need to publish and what version/tag to use
+      - name: Check version and prepare for publishing
         run: |
-          # Get the current version from package.json
+          # Get current version from package.json
           CURRENT_VERSION=$(jq -r '.version' package.json)
-
-          # Use input version if provided, otherwise use current version
+          
+          # CASE 1: Manual workflow trigger with specified version
           if [ -n "${{ inputs.version }}" ]; then
             VERSION="${{ inputs.version }}"
+            TAG="${{ inputs.tag }}"
+            SHOULD_PUBLISH="true"
+            echo "Manual trigger: Using provided version ${VERSION} with tag ${TAG}"
+          
+          # CASE 2: Automatic trigger from package.json changes
           else
             VERSION="${CURRENT_VERSION}"
+            
+            # Check if this version already exists in npm registry to avoid duplicates
+            if npm view @bytebase/dbhub@${VERSION} version &> /dev/null; then
+              echo "Version ${VERSION} already exists in npm registry. Skipping publish."
+              SHOULD_PUBLISH="false"
+            else
+              echo "Version ${VERSION} is new. Proceeding with publish."
+              SHOULD_PUBLISH="true"
+              
+              # Determine appropriate npm tag based on version format:
+              # - For prerelease versions like "0.1.0-beta", use "beta" as the tag
+              # - For stable versions like "1.0.0", use "latest" as the tag
+              if [[ "${VERSION}" == *"-"* ]]; then
+                # Extract tag from version string (e.g., "beta" from "0.1.0-beta")
+                TAG=$(echo "${VERSION}" | cut -d'-' -f2 | cut -d'.' -f1)
+                echo "Prerelease version detected. Using '${TAG}' npm tag."
+              else
+                TAG="latest"
+                echo "Stable version detected. Using 'latest' npm tag."
+              fi
+            fi
+          fi
+          
+          # Store values as environment variables for use in later steps
+          echo "PACKAGE_VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "NPM_TAG=${TAG}" >> $GITHUB_ENV
+          echo "SHOULD_PUBLISH=${SHOULD_PUBLISH}" >> $GITHUB_ENV
+          
+          # Summary message
+          if [ "${SHOULD_PUBLISH}" = "true" ]; then
+            echo "Publishing version: ${VERSION} with tag: ${TAG}"
           fi
 
-          echo "Publishing version: ${VERSION} with tag: ${{ inputs.tag }}"
+          # Only modify package.json if we're going to publish
+          if [ "${SHOULD_PUBLISH}" = "true" ]; then
+            # Step 1: Update package name and version
+            echo "Preparing package.json for publishing..."
+            jq --arg version "$VERSION" '.name = "@bytebase/dbhub" | .version = $version' package.json > package.json.tmp
+            mv package.json.tmp package.json
+            
+            # Step 2: Configure which files to include in the published package
+            echo "Setting files to include in the npm package..."
+            jq '.files = ["dist/**/*", "LICENSE", "README.md"]' package.json > package.json.tmp
+            mv package.json.tmp package.json
 
-          # Update package.json to use @bytebase scope and set version
-          jq --arg version "$VERSION" '.name = "@bytebase/dbhub" | .version = $version' package.json > package.json.tmp
-          mv package.json.tmp package.json
+            # Step 3: Add binary entry for CLI usage (makes it executable with 'npx' or after global install)
+            echo "Adding bin entry for CLI usage..."
+            jq '.bin = {"dbhub": "dist/index.js"}' package.json > package.json.tmp 
+            mv package.json.tmp package.json
+            
+            echo "Package.json prepared successfully for publishing"
+          else
+            echo "Skipping package.json modifications as we won't be publishing"
+          fi
 
-          # Set files to include in the package
-          jq '.files = ["dist/**/*", "LICENSE", "README.md"]' package.json > package.json.tmp
-          mv package.json.tmp package.json
-
-          # Add bin entry for CLI usage
-          jq '.bin = {"dbhub": "dist/index.js"}' package.json > package.json.tmp 
-          mv package.json.tmp package.json
-
+      # Publish the package to npm if conditions are met
       - name: Publish to npm
-        run: pnpm publish --no-git-checks --access public --tag ${{ inputs.tag }}
+        if: env.SHOULD_PUBLISH == 'true'
+        run: |
+          echo "Publishing @bytebase/dbhub@${{ env.PACKAGE_VERSION }} with tag ${{ env.NPM_TAG }}..."
+          pnpm publish --no-git-checks --access public --tag ${{ env.NPM_TAG }}
+          echo "✅ Successfully published to npm!"
         env:
+          # Uses NPM_TOKEN from repository secrets for authentication
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          
+      # Display a message when skipping publication
+      - name: Skip publishing
+        if: env.SHOULD_PUBLISH != 'true'
+        run: |
+          echo "⏭️ Skipping publish step because:"
+          echo "   - Version has not changed, or"
+          echo "   - Version already exists in the npm registry"
+          echo "To force publication, use the manual workflow trigger with a custom version."
