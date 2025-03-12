@@ -10,14 +10,44 @@ const __dirname = path.dirname(__filename);
 
 // Parse command line arguments
 export function parseCommandLineArgs() {
-  const { values } = parseArgs({
-    options: {
-      dsn: { type: 'string' },
-      transport: { type: 'string' }
-    }
-  });
+  // Check if any args start with '--' (the way tsx passes them)
+  const args = process.argv.slice(2);
+  const parsedManually: Record<string, string> = {};
   
-  return values;
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg.startsWith('--')) {
+      const [key, value] = arg.substring(2).split('=');
+      if (value) {
+        // Handle --key=value format
+        parsedManually[key] = value;
+      } else if (i + 1 < args.length && !args[i + 1].startsWith('--')) {
+        // Handle --key value format
+        parsedManually[key] = args[i + 1];
+        i++; // Skip the next argument as it's the value
+      } else {
+        // Handle --key format (boolean flag)
+        parsedManually[key] = 'true';
+      }
+    }
+  }
+  
+  // Also try parseArgs for normal node execution
+  try {
+    const { values } = parseArgs({
+      options: {
+        dsn: { type: 'string' },
+        transport: { type: 'string' },
+        port: { type: 'string' }
+      }
+    });
+    
+    // Merge both results, with manually parsed taking precedence
+    return { ...values, ...parsedManually };
+  } catch (err) {
+    // If parseArgs fails, just return the manually parsed args
+    return parsedManually;
+  }
 }
 
 /**
@@ -105,4 +135,31 @@ export function resolveTransport(): { type: 'stdio' | 'sse'; source: string } {
   
   // 3. Default to stdio
   return { type: 'stdio', source: 'default' };
+}
+
+/**
+ * Resolve port from command line args or environment variables
+ * Returns port number with 8080 as the default
+ * 
+ * Note: The port option is only applicable when using --transport=sse
+ * as it controls the HTTP server port for SSE connections.
+ */
+export function resolvePort(): { port: number; source: string } {
+  // Get command line arguments
+  const args = parseCommandLineArgs();
+  
+  // 1. Check command line arguments first (highest priority)
+  if (args.port) {
+    const port = parseInt(args.port, 10);
+    return { port, source: 'command line argument' };
+  }
+  
+  // 2. Check environment variables
+  if (process.env.PORT) {
+    const port = parseInt(process.env.PORT, 10);
+    return { port, source: 'environment variable' };
+  }
+  
+  // 3. Default to 8080
+  return { port: 8080, source: 'default' };
 }

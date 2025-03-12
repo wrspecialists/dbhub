@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 
 import { ConnectorManager } from './connectors/manager.js';
 import { ConnectorRegistry } from './connectors/interface.js';
-import { resolveDSN, resolveTransport } from './config/env.js';
+import { resolveDSN, resolveTransport, resolvePort } from './config/env.js';
 import { registerResources } from './resources/index.js';
 import { registerTools } from './tools/index.js';
 import { registerPrompts } from './prompts/index.js';
@@ -118,8 +118,10 @@ See documentation for more details on configuring database connections.
         await transport.handlePostMessage(req, res, req.body);
       });
       
-      // Start the HTTP server
-      const port = process.env.PORT || 8080;
+      // Start the HTTP server (port is only relevant for SSE transport)
+      const portData = resolvePort();
+      const port = portData.port;
+      console.error(`Port source: ${portData.source}`);
       app.listen(port, () => {
         console.error(`DBHub server listening at http://localhost:${port}`);
         console.error(`Connect to MCP server at http://localhost:${port}/sse`);
