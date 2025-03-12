@@ -6,7 +6,7 @@
 </a>
 </p>
 
-DBHub is a universal database gateway implementing the Model Context Protocol (MCP) server interface. This gateway allows MCP-compatible client to connect to and explore different databases.
+DBHub is a universal database gateway implementing the Model Context Protocol (MCP) server interface. This gateway allows MCP-compatible clients to connect to and explore different databases.
 
 ```bash
  +------------------+    +--------------+    +------------------+
@@ -34,6 +34,18 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
 - Safety checks to prevent dangerous queries
 
 ## Usage
+
+### Docker
+
+```bash
+docker run --rm --init \
+   --name dbhub \
+   --publish 8080:8080 \
+   bytebase/dbhub \
+   --transport sse \
+   --port 8080 \
+   --dsn "postgres://user:password@localhost:5432/dbname?sslmode=disable"
+```
 
 ### Configure your database connection
 
@@ -89,15 +101,17 @@ Add to `claude_desktop_config.json`
 ```json
 {
   "mcpServers": {
-    "postgres": {
+    "dbhub": {
       "command": "docker",
       "args": [
         "run",
         "-i",
         "--rm",
         "bytebase/dbhub",
+        "--transport",
+        "stdio",
         "--dsn",
-        "postgresql://host.docker.internal:postgres:5432/bytebase"
+        "postgres://user:password@host.docker.internal:5432/dbname?sslmode=disable"
       ]
     }
   }
