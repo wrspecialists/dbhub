@@ -50,17 +50,7 @@ docker run --rm --init \
 ### NPM
 
 ```bash
-# Install latest stable version globally
-npm install -g @bytebase/dbhub
-
-# Or install development version
-npm install -g @bytebase/dbhub@dev
-
-# Run from anywhere
-dbhub --dsn="postgres://user:password@localhost:5432/dbname"
-
-# Run via npx
-npx @bytebase/dbhub --dsn="postgres://user:password@localhost:5432/dbname"
+npx @bytebase/dbhub --transport sse --port 8080 --dsn "postgres://user:password@localhost:5432/dbname"
 ```
 
 ## Usage
@@ -114,9 +104,12 @@ Database Source Name (DSN) is required to connect to your database. You can prov
 
 ![claude-desktop](https://raw.githubusercontent.com/bytebase/dbhub/main/assets/claude-desktop.webp)
 
-Add to `claude_desktop_config.json`
+- Claude Desktop only supports `stdio` transport https://github.com/orgs/modelcontextprotocol/discussions/16
+
+#### Docker
 
 ```json
+// claude_desktop_config.json
 {
   "mcpServers": {
     "dbhub": {
@@ -129,7 +122,29 @@ Add to `claude_desktop_config.json`
         "--transport",
         "stdio",
         "--dsn",
+        // Use host.docker.internal as the host if connecting to the local db
         "postgres://user:password@host.docker.internal:5432/dbname?sslmode=disable"
+      ]
+    }
+  }
+}
+```
+
+#### NPX
+
+```json
+// claude_desktop_config.json
+{
+  "mcpServers": {
+    "dbhub": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@bytebase/dbhub",
+        "--transport",
+        "stdio",
+        "--dsn",
+        "postgres://user:password@localhost:5432/dbname?sslmode=disable"
       ]
     }
   }
