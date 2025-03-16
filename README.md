@@ -145,6 +145,13 @@ DBHub supports the following database connection string formats:
 
 - Claude Desktop only supports `stdio` transport https://github.com/orgs/modelcontextprotocol/discussions/16
 
+### Cursor
+
+![cursor](https://raw.githubusercontent.com/bytebase/dbhub/main/resources/images/cursor.webp)
+
+- Cursor supports both `stdio` and `sse`.
+- Follow [Cursor MCP guide](https://docs.cursor.com/context/model-context-protocol) and make sure to use [Agent](https://docs.cursor.com/chat/agent) mode.
+
 #### Docker
 
 ```json
