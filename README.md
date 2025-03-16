@@ -18,6 +18,8 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
  |                  |    |              |    |                  |
  |     Other MCP    +--->+              +--->+     SQLite       |
  |      Clients     |    |              |    |                  |
+ |                  |    |              +--->+     MySQL        |
+ |                  |    |              |    |                  |
  |                  |    |              +--->+     DuckDB       |
  |                  |    |              |    |      (soon)      |
  |                  |    |              +--->+  Other Databases |
@@ -55,6 +57,15 @@ docker run --rm --init \
    --transport sse \
    --port 8080 \
    --dsn "sqlite::memory:"
+
+# MySQL example
+docker run --rm --init \
+   --name dbhub \
+   --publish 8080:8080 \
+   bytebase/dbhub \
+   --transport sse \
+   --port 8080 \
+   --dsn "mysql://user:password@localhost:3306/dbname"
 ```
 
 ### NPM
@@ -65,6 +76,9 @@ npx @bytebase/dbhub --transport sse --port 8080 --dsn "postgres://user:password@
 
 # SQLite example
 npx @bytebase/dbhub --transport sse --port 8080 --dsn "sqlite:///path/to/database.db"
+
+# MySQL example
+npx @bytebase/dbhub --transport sse --port 8080 --dsn "mysql://user:password@localhost:3306/dbname"
 ```
 
 ## Usage
@@ -102,6 +116,7 @@ DBHub supports the following database connection string formats:
 | PostgreSQL | `postgres://[user]:[password]@[host]:[port]/[database]`   | `postgres://user:password@localhost:5432/dbname?sslmode=disable` |
 | SQLite     | `sqlite:///[path/to/file]` or `sqlite::memory:`           | `sqlite:///path/to/database.db` or `sqlite::memory:`  |
 | SQL Server | `sqlserver://[user]:[password]@[host]:[port]/[database]`  | `sqlserver://user:password@localhost:1433/dbname`      |
+| MySQL      | `mysql://[user]:[password]@[host]:[port]/[database]`      | `mysql://user:password@localhost:3306/dbname`          |
 
 ### Transport
 
@@ -215,6 +230,25 @@ DBHub supports the following database connection string formats:
 }
 ```
 
+```json
+// claude_desktop_config.json - MySQL example
+{
+  "mcpServers": {
+    "dbhub-mysql": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@bytebase/dbhub",
+        "--transport",
+        "stdio",
+        "--dsn",
+        "mysql://user:password@localhost:3306/dbname"
+      ]
+    }
+  }
+}
+```
+
 ## Development
 
 1. Install dependencies:
@@ -248,6 +282,9 @@ TRANSPORT=stdio DSN="sqlite:///path/to/database.db" npx @modelcontextprotocol/in
 
 # SQLite in-memory example  
 TRANSPORT=stdio DSN="sqlite::memory:" npx @modelcontextprotocol/inspector node /path/to/dbhub/dist/index.js
+
+# MySQL example
+TRANSPORT=stdio DSN="mysql://user:password@localhost:3306/dbname" npx @modelcontextprotocol/inspector node /path/to/dbhub/dist/index.js
 ```
 
 #### SSE
