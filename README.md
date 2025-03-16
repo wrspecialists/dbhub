@@ -20,20 +20,34 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
  |      Clients     |    |              |    |                  |
  |                  |    |              +--->+     MySQL        |
  |                  |    |              |    |                  |
- |                  |    |              +--->+     DuckDB       |
- |                  |    |              |    |      (soon)      |
  |                  |    |              +--->+  Other Databases |
- |                  |    |              |    |     (coming)     |
+ |                  |    |              |    |                  |
  +------------------+    +--------------+    +------------------+
       MCP Clients           MCP Server             Databases
 ```
 
-## Features
+## Supported Matrix
 
-- Browse available tables in the database
-- View schema information for tables
-- Run read-only SQL queries against the database
-- Safety checks to prevent dangerous queries
+### Database Resources
+
+| Resource               | URI Format | PostgreSQL | MySQL | SQL Server | SQLite |
+|------------------------|:----------:|:----------:|:-----:|:----------:|:------:|
+| Tables                 | `db://tables` |     ✅     |   ✅  |     ✅     |   ✅   |
+| Schema                 | `db://schema/{tableName}` |     ✅     |   ✅  |     ✅     |   ✅   |
+
+### Database Tools
+
+| Tool                   | Command Name       | PostgreSQL | MySQL | SQL Server | SQLite |
+|------------------------|:------------------:|:----------:|:-----:|:----------:|:------:|
+| Execute Query          | `run_query`        |     ✅     |   ✅  |     ✅     |   ✅   |
+| List Connectors        | `list_connectors`  |     ✅     |   ✅  |     ✅     |   ✅   |
+
+### Prompt Capabilities
+
+| Prompt                 | Command Name     | PostgreSQL | MySQL | SQL Server | SQLite |
+|------------------------|:----------------:|:----------:|:-----:|:----------:|:------:|
+| Generate SQL           | `generate_sql`   |     ✅     |   ✅  |     ✅     |   ✅   |
+| Explain DB Elements    | `explain_db`     |     ✅     |   ✅  |     ✅     |   ✅   |
 
 ## Installation
 
@@ -49,37 +63,58 @@ docker run --rm --init \
    --port 8080 \
    --dsn "postgres://user:password@localhost:5432/dbname?sslmode=disable"
 
-# SQLite in-memory example
-docker run --rm --init \
-   --name dbhub \
-   --publish 8080:8080 \
-   bytebase/dbhub \
-   --transport sse \
-   --port 8080 \
-   --dsn "sqlite::memory:"
-
-# MySQL example
-docker run --rm --init \
-   --name dbhub \
-   --publish 8080:8080 \
-   bytebase/dbhub \
-   --transport sse \
-   --port 8080 \
-   --dsn "mysql://user:password@localhost:3306/dbname"
-```
-
 ### NPM
 
 ```bash
 # PostgreSQL example
 npx @bytebase/dbhub --transport sse --port 8080 --dsn "postgres://user:password@localhost:5432/dbname"
-
-# SQLite example
-npx @bytebase/dbhub --transport sse --port 8080 --dsn "sqlite:///path/to/database.db"
-
-# MySQL example
-npx @bytebase/dbhub --transport sse --port 8080 --dsn "mysql://user:password@localhost:3306/dbname"
 ```
+
+### Claude Desktop
+
+![claude-desktop](https://raw.githubusercontent.com/bytebase/dbhub/main/resources/images/claude-desktop.webp)
+
+- Claude Desktop only supports `stdio` transport https://github.com/orgs/modelcontextprotocol/discussions/16
+
+```json
+// claude_desktop_config.json - PostgreSQL example
+{
+  "mcpServers": {
+    "dbhub-postgres-docker": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "bytebase/dbhub",
+        "--transport",
+        "stdio",
+        "--dsn",
+        // Use host.docker.internal as the host if connecting to the local db
+        "postgres://user:password@host.docker.internal:5432/dbname?sslmode=disable"
+      ]
+    },
+    "dbhub-postgres-npx": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@bytebase/dbhub",
+        "--transport",
+        "stdio",
+        "--dsn",
+        "postgres://user:password@localhost:5432/dbname?sslmode=disable"
+      ]
+    }
+  }
+}
+```
+
+### Cursor
+
+![cursor](https://raw.githubusercontent.com/bytebase/dbhub/main/resources/images/cursor.webp)
+
+- Cursor supports both `stdio` and `sse`.
+- Follow [Cursor MCP guide](https://docs.cursor.com/context/model-context-protocol) and make sure to use [Agent](https://docs.cursor.com/chat/agent) mode.
 
 ## Usage
 
@@ -106,8 +141,6 @@ Database Source Name (DSN) is required to connect to your database. You can prov
   ```
   DSN=postgres://user:password@localhost:5432/dbname?sslmode=disable
   ```
-
-### Supported DSN formats
 
 DBHub supports the following database connection string formats:
 
@@ -139,122 +172,6 @@ DBHub supports the following database connection string formats:
 | transport | Transport mode: `stdio` or `sse`                                | `stdio`                             |
 | port      | HTTP server port (only applicable when using `--transport=sse`) | `8080`                              |
 
-### Claude Desktop
-
-![claude-desktop](https://raw.githubusercontent.com/bytebase/dbhub/main/resources/images/claude-desktop.webp)
-
-- Claude Desktop only supports `stdio` transport https://github.com/orgs/modelcontextprotocol/discussions/16
-
-### Cursor
-
-![cursor](https://raw.githubusercontent.com/bytebase/dbhub/main/resources/images/cursor.webp)
-
-- Cursor supports both `stdio` and `sse`.
-- Follow [Cursor MCP guide](https://docs.cursor.com/context/model-context-protocol) and make sure to use [Agent](https://docs.cursor.com/chat/agent) mode.
-
-#### Docker
-
-```json
-// claude_desktop_config.json - PostgreSQL example
-{
-  "mcpServers": {
-    "dbhub-postgres": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "bytebase/dbhub",
-        "--transport",
-        "stdio",
-        "--dsn",
-        // Use host.docker.internal as the host if connecting to the local db
-        "postgres://user:password@host.docker.internal:5432/dbname?sslmode=disable"
-      ]
-    }
-  }
-}
-```
-
-```json
-// claude_desktop_config.json - SQLite example (in-memory)
-{
-  "mcpServers": {
-    "dbhub-sqlite": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "bytebase/dbhub",
-        "--transport",
-        "stdio",
-        "--dsn",
-        "sqlite::memory:"
-      ]
-    }
-  }
-}
-```
-
-#### NPX
-
-```json
-// claude_desktop_config.json - PostgreSQL example
-{
-  "mcpServers": {
-    "dbhub-postgres": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@bytebase/dbhub",
-        "--transport",
-        "stdio",
-        "--dsn",
-        "postgres://user:password@localhost:5432/dbname?sslmode=disable"
-      ]
-    }
-  }
-}
-```
-
-```json
-// claude_desktop_config.json - SQLite example
-{
-  "mcpServers": {
-    "dbhub-sqlite": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@bytebase/dbhub",
-        "--transport",
-        "stdio",
-        "--dsn",
-        "sqlite:///path/to/database.db"
-      ]
-    }
-  }
-}
-```
-
-```json
-// claude_desktop_config.json - MySQL example
-{
-  "mcpServers": {
-    "dbhub-mysql": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@bytebase/dbhub",
-        "--transport",
-        "stdio",
-        "--dsn",
-        "mysql://user:password@localhost:3306/dbname"
-      ]
-    }
-  }
-}
-```
 
 ## Development
 
@@ -283,15 +200,6 @@ DBHub supports the following database connection string formats:
 ```bash
 # PostgreSQL example
 TRANSPORT=stdio DSN="postgres://user:password@localhost:5432/dbname?sslmode=disable" npx @modelcontextprotocol/inspector node /path/to/dbhub/dist/index.js
-
-# SQLite example
-TRANSPORT=stdio DSN="sqlite:///path/to/database.db" npx @modelcontextprotocol/inspector node /path/to/dbhub/dist/index.js
-
-# SQLite in-memory example  
-TRANSPORT=stdio DSN="sqlite::memory:" npx @modelcontextprotocol/inspector node /path/to/dbhub/dist/index.js
-
-# MySQL example
-TRANSPORT=stdio DSN="mysql://user:password@localhost:3306/dbname" npx @modelcontextprotocol/inspector node /path/to/dbhub/dist/index.js
 ```
 
 #### SSE
