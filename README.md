@@ -1,7 +1,7 @@
 <p align="center">
 <a href="https://dbhub.ai/" target="_blank">
 <picture>
-  <img src="https://raw.githubusercontent.com/bytebase/dbhub/main/assets/logo-full.svg" width="50%">
+  <img src="https://raw.githubusercontent.com/bytebase/dbhub/main/resources/images/logo-full.svg" width="50%">
 </picture>
 </a>
 </p>
@@ -14,14 +14,14 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
  |                  |    |              |    |                  |
  |  Claude Desktop  +--->+              +--->+    PostgreSQL    |
  |                  |    |              |    |                  |
- |      Cursor      +--->+    DBHub     +--->+      MySQL       |
+ |      Cursor      +--->+    DBHub     +--->+    SQL Server    |
  |                  |    |              |    |                  |
  |     Other MCP    +--->+              +--->+     SQLite       |
  |      Clients     |    |              |    |                  |
  |                  |    |              +--->+     DuckDB       |
- |                  |    |              |    |                  |
+ |                  |    |              |    |      (soon)      |
  |                  |    |              +--->+  Other Databases |
- |                  |    |              |    |                  |
+ |                  |    |              |    |     (coming)     |
  +------------------+    +--------------+    +------------------+
       MCP Clients           MCP Server             Databases
 ```
@@ -38,6 +38,7 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
 ### Docker
 
 ```bash
+# PostgreSQL example
 docker run --rm --init \
    --name dbhub \
    --publish 8080:8080 \
@@ -45,12 +46,25 @@ docker run --rm --init \
    --transport sse \
    --port 8080 \
    --dsn "postgres://user:password@localhost:5432/dbname?sslmode=disable"
+
+# SQLite in-memory example
+docker run --rm --init \
+   --name dbhub \
+   --publish 8080:8080 \
+   bytebase/dbhub \
+   --transport sse \
+   --port 8080 \
+   --dsn "sqlite::memory:"
 ```
 
 ### NPM
 
 ```bash
+# PostgreSQL example
 npx @bytebase/dbhub --transport sse --port 8080 --dsn "postgres://user:password@localhost:5432/dbname"
+
+# SQLite example
+npx @bytebase/dbhub --transport sse --port 8080 --dsn "sqlite:///path/to/database.db"
 ```
 
 ## Usage
@@ -79,6 +93,16 @@ Database Source Name (DSN) is required to connect to your database. You can prov
   DSN=postgres://user:password@localhost:5432/dbname?sslmode=disable
   ```
 
+### Supported DSN formats
+
+DBHub supports the following database connection string formats:
+
+| Database   | DSN Format                                                | Example                                                 |
+|------------|-----------------------------------------------------------|--------------------------------------------------------|
+| PostgreSQL | `postgres://[user]:[password]@[host]:[port]/[database]`   | `postgres://user:password@localhost:5432/dbname?sslmode=disable` |
+| SQLite     | `sqlite:///[path/to/file]` or `sqlite::memory:`           | `sqlite:///path/to/database.db` or `sqlite::memory:`  |
+| SQL Server | `sqlserver://[user]:[password]@[host]:[port]/[database]`  | `sqlserver://user:password@localhost:1433/dbname`      |
+
 ### Transport
 
 - **stdio** (default) - for direct integration with tools like Claude Desktop:
@@ -102,17 +126,17 @@ Database Source Name (DSN) is required to connect to your database. You can prov
 
 ### Claude Desktop
 
-![claude-desktop](https://raw.githubusercontent.com/bytebase/dbhub/main/assets/claude-desktop.webp)
+![claude-desktop](https://raw.githubusercontent.com/bytebase/dbhub/main/resources/images/claude-desktop.webp)
 
 - Claude Desktop only supports `stdio` transport https://github.com/orgs/modelcontextprotocol/discussions/16
 
 #### Docker
 
 ```json
-// claude_desktop_config.json
+// claude_desktop_config.json - PostgreSQL example
 {
   "mcpServers": {
-    "dbhub": {
+    "dbhub-postgres": {
       "command": "docker",
       "args": [
         "run",
@@ -130,13 +154,34 @@ Database Source Name (DSN) is required to connect to your database. You can prov
 }
 ```
 
+```json
+// claude_desktop_config.json - SQLite example (in-memory)
+{
+  "mcpServers": {
+    "dbhub-sqlite": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "bytebase/dbhub",
+        "--transport",
+        "stdio",
+        "--dsn",
+        "sqlite::memory:"
+      ]
+    }
+  }
+}
+```
+
 #### NPX
 
 ```json
-// claude_desktop_config.json
+// claude_desktop_config.json - PostgreSQL example
 {
   "mcpServers": {
-    "dbhub": {
+    "dbhub-postgres": {
       "command": "npx",
       "args": [
         "-y",
@@ -145,6 +190,25 @@ Database Source Name (DSN) is required to connect to your database. You can prov
         "stdio",
         "--dsn",
         "postgres://user:password@localhost:5432/dbname?sslmode=disable"
+      ]
+    }
+  }
+}
+```
+
+```json
+// claude_desktop_config.json - SQLite example
+{
+  "mcpServers": {
+    "dbhub-sqlite": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@bytebase/dbhub",
+        "--transport",
+        "stdio",
+        "--dsn",
+        "sqlite:///path/to/database.db"
       ]
     }
   }
@@ -176,7 +240,14 @@ Database Source Name (DSN) is required to connect to your database. You can prov
 #### stdio
 
 ```bash
+# PostgreSQL example
 TRANSPORT=stdio DSN="postgres://user:password@localhost:5432/dbname?sslmode=disable" npx @modelcontextprotocol/inspector node /path/to/dbhub/dist/index.js
+
+# SQLite example
+TRANSPORT=stdio DSN="sqlite:///path/to/database.db" npx @modelcontextprotocol/inspector node /path/to/dbhub/dist/index.js
+
+# SQLite in-memory example  
+TRANSPORT=stdio DSN="sqlite::memory:" npx @modelcontextprotocol/inspector node /path/to/dbhub/dist/index.js
 ```
 
 #### SSE
@@ -191,4 +262,4 @@ npx @modelcontextprotocol/inspector
 
 Connect to the DBHub server `/sse` endpoint
 
-![mcp-inspector](https://raw.githubusercontent.com/bytebase/dbhub/main/assets/mcp-inspector.webp)
+![mcp-inspector](https://raw.githubusercontent.com/bytebase/dbhub/main/resources/images/mcp-inspector.webp)

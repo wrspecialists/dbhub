@@ -1,14 +1,14 @@
 /**
- * SQLite Connector Implementation (Template)
+ * SQLite Connector Implementation
  * 
- * This is a template showing how to implement a new database connector.
+ * Implements SQLite database connectivity for DBHub
  * To use this connector:
- * 1. Install the required dependencies: npm install sqlite3
- * 2. Implement the methods below
- * 3. Set DSN=sqlite:///path/to/database.db in your .env file
+ * 1. Set DSN=sqlite:///path/to/database.db in your .env file
+ * 2. Or set DB_CONNECTOR_TYPE=sqlite for default in-memory database
  */
 
 import { Connector, ConnectorRegistry, DSNParser, QueryResult, TableColumn } from '../interface.js';
+import sqlite3 from 'sqlite3';
 
 /**
  * SQLite DSN Parser
@@ -64,42 +64,49 @@ class SQLiteDSNParser implements DSNParser {
   }
 }
 
+interface SQLiteTableInfo {
+  name: string;
+  type: string;
+  notnull: number;
+  dflt_value: string | null;
+  pk: number;
+}
+
+interface SQLiteTableNameRow {
+  name: string;
+}
+
 export class SQLiteConnector implements Connector {
   id = 'sqlite';
   name = 'SQLite';
   dsnParser = new SQLiteDSNParser();
   
-  private db: any; // This would be the SQLite connection
-  private dbPath: string | null = null;
+  private db: sqlite3.Database | null = null;
+  private dbPath: string = ':memory:'; // Default to in-memory database
 
   async connect(dsn: string): Promise<void> {
     const config = this.dsnParser.parse(dsn);
     this.dbPath = config.dbPath;
     
-    // Example implementation (requires sqlite3 package)
-    /*
     return new Promise((resolve, reject) => {
-      const sqlite3 = require('sqlite3').verbose();
       this.db = new sqlite3.Database(this.dbPath, (err) => {
         if (err) {
           console.error("Failed to connect to SQLite database:", err);
           reject(err);
         } else {
+          // Can't use console.log here because it will break the stdio transport
           console.error("Successfully connected to SQLite database");
           resolve();
         }
       });
     });
-    */
-    throw new Error('SQLite connector not implemented yet');
   }
 
   async disconnect(): Promise<void> {
     // Close the SQLite connection
-    /*
     if (this.db) {
       return new Promise((resolve, reject) => {
-        this.db.close((err) => {
+        this.db!.close((err) => {
           if (err) {
             reject(err);
           } else {
@@ -109,15 +116,16 @@ export class SQLiteConnector implements Connector {
         });
       });
     }
-    */
-    throw new Error('SQLite connector not implemented yet');
+    return Promise.resolve();
   }
 
   async getTables(): Promise<string[]> {
-    // Get all tables from SQLite
-    /*
+    if (!this.db) {
+      throw new Error("Not connected to SQLite database");
+    }
+    
     return new Promise((resolve, reject) => {
-      this.db.all(
+      this.db!.all<SQLiteTableNameRow>(
         `SELECT name FROM sqlite_master 
          WHERE type='table' AND name NOT LIKE 'sqlite_%'
          ORDER BY name`,
@@ -130,15 +138,15 @@ export class SQLiteConnector implements Connector {
         }
       );
     });
-    */
-    throw new Error('SQLite connector not implemented yet');
   }
 
   async tableExists(tableName: string): Promise<boolean> {
-    // Check if a table exists in SQLite
-    /*
+    if (!this.db) {
+      throw new Error("Not connected to SQLite database");
+    }
+    
     return new Promise((resolve, reject) => {
-      this.db.get(
+      this.db!.get<SQLiteTableNameRow>(
         `SELECT name FROM sqlite_master 
          WHERE type='table' AND name = ?`,
         [tableName],
@@ -151,15 +159,15 @@ export class SQLiteConnector implements Connector {
         }
       );
     });
-    */
-    throw new Error('SQLite connector not implemented yet');
   }
 
   async getTableSchema(tableName: string): Promise<TableColumn[]> {
-    // Get schema for a specific table
-    /*
+    if (!this.db) {
+      throw new Error("Not connected to SQLite database");
+    }
+    
     return new Promise((resolve, reject) => {
-      this.db.all(
+      this.db!.all<SQLiteTableInfo>(
         `PRAGMA table_info(${tableName})`,
         (err, rows) => {
           if (err) {
@@ -169,7 +177,7 @@ export class SQLiteConnector implements Connector {
             const columns = rows.map(row => ({
               column_name: row.name,
               data_type: row.type,
-              is_nullable: row.notnull ? 'NO' : 'YES',
+              is_nullable: row.notnull === 0 ? 'YES' : 'NO', // In SQLite, 0 means nullable
               column_default: row.dflt_value
             }));
             resolve(columns);
@@ -177,20 +185,21 @@ export class SQLiteConnector implements Connector {
         }
       );
     });
-    */
-    throw new Error('SQLite connector not implemented yet');
   }
 
   async executeQuery(query: string): Promise<QueryResult> {
-    // Execute a query against SQLite
+    if (!this.db) {
+      throw new Error("Not connected to SQLite database");
+    }
+    
+    // Validate query for safety
     const safetyCheck = this.validateQuery(query);
     if (!safetyCheck.isValid) {
       throw new Error(safetyCheck.message || "Query validation failed");
     }
 
-    /*
     return new Promise((resolve, reject) => {
-      this.db.all(query, (err, rows) => {
+      this.db!.all(query, (err, rows) => {
         if (err) {
           reject(err);
         } else {
@@ -198,8 +207,6 @@ export class SQLiteConnector implements Connector {
         }
       });
     });
-    */
-    throw new Error('SQLite connector not implemented yet');
   }
 
   validateQuery(query: string): { isValid: boolean; message?: string } {
@@ -215,6 +222,6 @@ export class SQLiteConnector implements Connector {
   }
 }
 
-// To enable this connector, uncomment the following lines and install sqlite3:
-// const sqliteConnector = new SQLiteConnector();
-// ConnectorRegistry.register(sqliteConnector);
+// Register the SQLite connector
+const sqliteConnector = new SQLiteConnector();
+ConnectorRegistry.register(sqliteConnector);
