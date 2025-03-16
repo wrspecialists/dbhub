@@ -62,12 +62,29 @@ docker run --rm --init \
    --transport sse \
    --port 8080 \
    --dsn "postgres://user:password@localhost:5432/dbname?sslmode=disable"
+```
+
+```bash
+# Demo mode with sample employee database
+docker run --rm --init \
+   --name dbhub \
+   --publish 8080:8080 \
+   bytebase/dbhub \
+   --transport sse \
+   --port 8080 \
+   --demo
+```
 
 ### NPM
 
 ```bash
 # PostgreSQL example
 npx @bytebase/dbhub --transport sse --port 8080 --dsn "postgres://user:password@localhost:5432/dbname"
+```
+
+```bash
+# Demo mode with sample employee database
+npx @bytebase/dbhub --transport sse --port 8080 --demo
 ```
 
 ### Claude Desktop
@@ -77,7 +94,7 @@ npx @bytebase/dbhub --transport sse --port 8080 --dsn "postgres://user:password@
 - Claude Desktop only supports `stdio` transport https://github.com/orgs/modelcontextprotocol/discussions/16
 
 ```json
-// claude_desktop_config.json - PostgreSQL example
+// claude_desktop_config.json
 {
   "mcpServers": {
     "dbhub-postgres-docker": {
@@ -104,6 +121,16 @@ npx @bytebase/dbhub --transport sse --port 8080 --dsn "postgres://user:password@
         "--dsn",
         "postgres://user:password@localhost:5432/dbname?sslmode=disable"
       ]
+    },
+    "dbhub-demo": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@bytebase/dbhub",
+        "--transport",
+        "stdio",
+        "--demo"
+      ]
     }
   }
 }
@@ -120,7 +147,13 @@ npx @bytebase/dbhub --transport sse --port 8080 --dsn "postgres://user:password@
 
 ### Configure your database connection
 
-Database Source Name (DSN) is required to connect to your database. You can provide this in several ways:
+You can use DBHub in demo mode with a sample employee database for testing:
+
+```bash
+pnpm dev --demo
+```
+
+For real databases, a Database Source Name (DSN) is required. You can provide this in several ways:
 
 - **Command line argument** (highest priority):
 
@@ -168,7 +201,8 @@ DBHub supports the following database connection string formats:
 
 | Option    | Description                                                     | Default                             |
 | :-------- | :-------------------------------------------------------------- | :---------------------------------- |
-| dsn       | Database connection string                                      | Required if not set via environment |
+| demo      | Run in demo mode with sample employee database                  | `false`                             |
+| dsn       | Database connection string                                      | Required if not in demo mode        |
 | transport | Transport mode: `stdio` or `sse`                                | `stdio`                             |
 | port      | HTTP server port (only applicable when using `--transport=sse`) | `8080`                              |
 

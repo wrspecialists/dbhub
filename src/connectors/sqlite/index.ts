@@ -84,7 +84,7 @@ export class SQLiteConnector implements Connector {
   private db: sqlite3.Database | null = null;
   private dbPath: string = ':memory:'; // Default to in-memory database
 
-  async connect(dsn: string): Promise<void> {
+  async connect(dsn: string, initScript?: string): Promise<void> {
     const config = this.dsnParser.parse(dsn);
     this.dbPath = config.dbPath;
     
@@ -96,7 +96,21 @@ export class SQLiteConnector implements Connector {
         } else {
           // Can't use console.log here because it will break the stdio transport
           console.error("Successfully connected to SQLite database");
-          resolve();
+          
+          // If an initialization script is provided, run it
+          if (initScript) {
+            this.db!.exec(initScript, (err) => {
+              if (err) {
+                console.error("Failed to initialize database with script:", err);
+                reject(err);
+              } else {
+                console.error("Successfully initialized database with script");
+                resolve();
+              }
+            });
+          } else {
+            resolve();
+          }
         }
       });
     });
