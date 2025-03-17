@@ -26,28 +26,34 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
       MCP Clients           MCP Server             Databases
 ```
 
+## Demo SSE Endpoint
+
+https://demo.dbhub.ai/sse connects a [sample employee database](https://github.com/bytebase/employee-sample-database). You can point Cursor or MCP Inspector to it to see it in action.
+
+![mcp-inspector](https://raw.githubusercontent.com/bytebase/dbhub/main/resources/images/mcp-inspector.webp)
+
 ## Supported Matrix
 
 ### Database Resources
 
-| Resource               | URI Format | PostgreSQL | MySQL | SQL Server | SQLite |
-|------------------------|:----------:|:----------:|:-----:|:----------:|:------:|
-| Tables                 | `db://tables` |     ✅     |   ✅  |     ✅     |   ✅   |
-| Schema                 | `db://schema/{tableName}` |     ✅     |   ✅  |     ✅     |   ✅   |
+| Resource |        URI Format         | PostgreSQL | MySQL | SQL Server | SQLite |
+| -------- | :-----------------------: | :--------: | :---: | :--------: | :----: |
+| Tables   |       `db://tables`       |     ✅     |  ✅   |     ✅     |   ✅   |
+| Schema   | `db://schema/{tableName}` |     ✅     |  ✅   |     ✅     |   ✅   |
 
 ### Database Tools
 
-| Tool                   | Command Name       | PostgreSQL | MySQL | SQL Server | SQLite |
-|------------------------|:------------------:|:----------:|:-----:|:----------:|:------:|
-| Execute Query          | `run_query`        |     ✅     |   ✅  |     ✅     |   ✅   |
-| List Connectors        | `list_connectors`  |     ✅     |   ✅  |     ✅     |   ✅   |
+| Tool            |   Command Name    | PostgreSQL | MySQL | SQL Server | SQLite |
+| --------------- | :---------------: | :--------: | :---: | :--------: | :----: |
+| Execute Query   |    `run_query`    |     ✅     |  ✅   |     ✅     |   ✅   |
+| List Connectors | `list_connectors` |     ✅     |  ✅   |     ✅     |   ✅   |
 
 ### Prompt Capabilities
 
-| Prompt                 | Command Name     | PostgreSQL | MySQL | SQL Server | SQLite |
-|------------------------|:----------------:|:----------:|:-----:|:----------:|:------:|
-| Generate SQL           | `generate_sql`   |     ✅     |   ✅  |     ✅     |   ✅   |
-| Explain DB Elements    | `explain_db`     |     ✅     |   ✅  |     ✅     |   ✅   |
+| Prompt              |  Command Name  | PostgreSQL | MySQL | SQL Server | SQLite |
+| ------------------- | :------------: | :--------: | :---: | :--------: | :----: |
+| Generate SQL        | `generate_sql` |     ✅     |  ✅   |     ✅     |   ✅   |
+| Explain DB Elements |  `explain_db`  |     ✅     |  ✅   |     ✅     |   ✅   |
 
 ## Installation
 
@@ -126,13 +132,7 @@ npx @bytebase/dbhub --transport sse --port 8080 --demo
     },
     "dbhub-demo": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@bytebase/dbhub",
-        "--transport",
-        "stdio",
-        "--demo"
-      ]
+      "args": ["-y", "@bytebase/dbhub", "--transport", "stdio", "--demo"]
     }
   }
 }
@@ -179,12 +179,12 @@ For real databases, a Database Source Name (DSN) is required. You can provide th
 
 DBHub supports the following database connection string formats:
 
-| Database   | DSN Format                                                | Example                                                 |
-|------------|-----------------------------------------------------------|--------------------------------------------------------|
-| PostgreSQL | `postgres://[user]:[password]@[host]:[port]/[database]`   | `postgres://user:password@localhost:5432/dbname?sslmode=disable` |
-| SQLite     | `sqlite:///[path/to/file]` or `sqlite::memory:`           | `sqlite:///path/to/database.db` or `sqlite::memory:`  |
-| SQL Server | `sqlserver://[user]:[password]@[host]:[port]/[database]`  | `sqlserver://user:password@localhost:1433/dbname`      |
-| MySQL      | `mysql://[user]:[password]@[host]:[port]/[database]`      | `mysql://user:password@localhost:3306/dbname`          |
+| Database   | DSN Format                                               | Example                                                          |
+| ---------- | -------------------------------------------------------- | ---------------------------------------------------------------- |
+| PostgreSQL | `postgres://[user]:[password]@[host]:[port]/[database]`  | `postgres://user:password@localhost:5432/dbname?sslmode=disable` |
+| SQLite     | `sqlite:///[path/to/file]` or `sqlite::memory:`          | `sqlite:///path/to/database.db` or `sqlite::memory:`             |
+| SQL Server | `sqlserver://[user]:[password]@[host]:[port]/[database]` | `sqlserver://user:password@localhost:1433/dbname`                |
+| MySQL      | `mysql://[user]:[password]@[host]:[port]/[database]`     | `mysql://user:password@localhost:3306/dbname`                    |
 
 ### Transport
 
@@ -201,15 +201,14 @@ DBHub supports the following database connection string formats:
 
 ### Command line options
 
-| Option    | Description                                                     | Default                             |
-| :-------- | :-------------------------------------------------------------- | :---------------------------------- |
-| demo      | Run in demo mode with sample employee database                  | `false`                             |
-| dsn       | Database connection string                                      | Required if not in demo mode        |
-| transport | Transport mode: `stdio` or `sse`                                | `stdio`                             |
-| port      | HTTP server port (only applicable when using `--transport=sse`) | `8080`                              |
+| Option    | Description                                                     | Default                      |
+| :-------- | :-------------------------------------------------------------- | :--------------------------- |
+| demo      | Run in demo mode with sample employee database                  | `false`                      |
+| dsn       | Database connection string                                      | Required if not in demo mode |
+| transport | Transport mode: `stdio` or `sse`                                | `stdio`                      |
+| port      | HTTP server port (only applicable when using `--transport=sse`) | `8080`                       |
 
 The demo mode uses an in-memory SQLite database loaded with the [sample employee database](https://github.com/bytebase/dbhub/tree/main/resources/employee-sqlite) that includes tables for employees, departments, titles, and salaries.
-
 
 ## Development
 
@@ -251,5 +250,3 @@ npx @modelcontextprotocol/inspector
 ```
 
 Connect to the DBHub server `/sse` endpoint
-
-![mcp-inspector](https://raw.githubusercontent.com/bytebase/dbhub/main/resources/images/mcp-inspector.webp)
