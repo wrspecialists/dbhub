@@ -9,7 +9,7 @@ export class SQLServerDSNParser implements DSNParser {
   parse(dsn: string): sql.config {
     // Remove the protocol prefix
     if (!this.isValidDSN(dsn)) {
-      throw new Error('Invalid SQL Server DSN format. Expected: mssql://username:password@host:port/database');
+      throw new Error('Invalid SQL Server DSN format. Expected: sqlserver://username:password@host:port/database');
     }
 
     // Parse the DSN
@@ -51,13 +51,13 @@ export class SQLServerDSNParser implements DSNParser {
   }
 
   getSampleDSN(): string {
-    return 'mssql://username:password@localhost:1433/database?encrypt=true';
+    return 'sqlserver://username:password@localhost:1433/database?encrypt=true';
   }
 
   isValidDSN(dsn: string): boolean {
     try {
       const url = new URL(dsn);
-      return url.protocol === 'mssql:';
+      return url.protocol === 'sqlserver:';
     } catch (e) {
       return false;
     }
