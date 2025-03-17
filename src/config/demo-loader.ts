@@ -13,7 +13,30 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Path to sample data files - will be bundled with the package
-const DEMO_DATA_DIR = path.join(__dirname, '..', 'resources', 'employee-sqlite');
+// Try different paths to find the SQL files in development or production
+let DEMO_DATA_DIR: string;
+const projectRootPath = path.join(__dirname, '..', '..', '..');
+const projectResourcesPath = path.join(projectRootPath, 'resources', 'employee-sqlite');
+const distPath = path.join(__dirname, '..', 'resources', 'employee-sqlite');
+
+// First try the project root resources directory (for development)
+if (fs.existsSync(projectResourcesPath)) {
+  DEMO_DATA_DIR = projectResourcesPath;
+} 
+// Then try dist directory (for production)
+else if (fs.existsSync(distPath)) {
+  DEMO_DATA_DIR = distPath;
+}
+// Fallback to a relative path from the current directory
+else {
+  DEMO_DATA_DIR = path.join(process.cwd(), 'resources', 'employee-sqlite');
+  if (!fs.existsSync(DEMO_DATA_DIR)) {
+    throw new Error(`Could not find employee-sqlite resources in any of the expected locations: 
+      - ${projectResourcesPath}
+      - ${distPath}
+      - ${DEMO_DATA_DIR}`);
+  }
+}
 
 /**
  * Load SQL file contents
