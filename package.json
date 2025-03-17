@@ -13,7 +13,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm",
+    "build": "tsup ./src --format esm --dts --clean",
     "start": "node dist/index.js",
     "dev": "NODE_ENV=development tsx src/index.ts",
     "crossdev": "cross-env NODE_ENV=development tsx src/index.ts"
