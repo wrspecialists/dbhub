@@ -1,14 +1,14 @@
 /**
  * SQLite Connector Implementation
  * 
- * Implements SQLite database connectivity for DBHub
+ * Implements SQLite database connectivity for DBHub using better-sqlite3
  * To use this connector:
  * 1. Set DSN=sqlite:///path/to/database.db in your .env file
  * 2. Or set DB_CONNECTOR_TYPE=sqlite for default in-memory database
  */
 
 import { Connector, ConnectorRegistry, DSNParser, QueryResult, TableColumn } from '../interface.js';
-import sqlite3 from 'sqlite3';
+import Database from 'better-sqlite3';
 
 /**
  * SQLite DSN Parser
@@ -81,54 +81,36 @@ export class SQLiteConnector implements Connector {
   name = 'SQLite';
   dsnParser = new SQLiteDSNParser();
   
-  private db: sqlite3.Database | null = null;
+  private db: Database.Database | null = null;
   private dbPath: string = ':memory:'; // Default to in-memory database
 
   async connect(dsn: string, initScript?: string): Promise<void> {
     const config = this.dsnParser.parse(dsn);
     this.dbPath = config.dbPath;
     
-    return new Promise((resolve, reject) => {
-      this.db = new sqlite3.Database(this.dbPath, (err) => {
-        if (err) {
-          console.error("Failed to connect to SQLite database:", err);
-          reject(err);
-        } else {
-          // Can't use console.log here because it will break the stdio transport
-          console.error("Successfully connected to SQLite database");
-          
-          // If an initialization script is provided, run it
-          if (initScript) {
-            this.db!.exec(initScript, (err) => {
-              if (err) {
-                console.error("Failed to initialize database with script:", err);
-                reject(err);
-              } else {
-                console.error("Successfully initialized database with script");
-                resolve();
-              }
-            });
-          } else {
-            resolve();
-          }
-        }
-      });
-    });
+    try {
+      this.db = new Database(this.dbPath);
+      console.error("Successfully connected to SQLite database");
+      
+      // If an initialization script is provided, run it
+      if (initScript) {
+        this.db.exec(initScript);
+        console.error("Successfully initialized database with script");
+      }
+    } catch (error) {
+      console.error("Failed to connect to SQLite database:", error);
+      throw error;
+    }
   }
 
   async disconnect(): Promise<void> {
-    // Close the SQLite connection
     if (this.db) {
-      return new Promise((resolve, reject) => {
-        this.db!.close((err) => {
-          if (err) {
-            reject(err);
-          } else {
-            this.db = null;
-            resolve();
-          }
-        });
-      });
+      try {
+        this.db.close();
+        this.db = null;
+      } catch (error) {
+        throw error;
+      }
     }
     return Promise.resolve();
   }
@@ -138,20 +120,17 @@ export class SQLiteConnector implements Connector {
       throw new Error("Not connected to SQLite database");
     }
     
-    return new Promise((resolve, reject) => {
-      this.db!.all<SQLiteTableNameRow>(
-        `SELECT name FROM sqlite_master 
-         WHERE type='table' AND name NOT LIKE 'sqlite_%'
-         ORDER BY name`,
-        (err, rows) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(rows.map(row => row.name));
-          }
-        }
-      );
-    });
+    try {
+      const rows = this.db.prepare(`
+        SELECT name FROM sqlite_master 
+        WHERE type='table' AND name NOT LIKE 'sqlite_%'
+        ORDER BY name
+      `).all() as SQLiteTableNameRow[];
+      
+      return rows.map(row => row.name);
+    } catch (error) {
+      throw error;
+    }
   }
 
   async tableExists(tableName: string): Promise<boolean> {
@@ -159,20 +138,16 @@ export class SQLiteConnector implements Connector {
       throw new Error("Not connected to SQLite database");
     }
     
-    return new Promise((resolve, reject) => {
-      this.db!.get<SQLiteTableNameRow>(
-        `SELECT name FROM sqlite_master 
-         WHERE type='table' AND name = ?`,
-        [tableName],
-        (err, row) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(!!row);
-          }
-        }
-      );
-    });
+    try {
+      const row = this.db.prepare(`
+        SELECT name FROM sqlite_master 
+        WHERE type='table' AND name = ?
+      `).get(tableName) as SQLiteTableNameRow | undefined;
+      
+      return !!row;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async getTableSchema(tableName: string): Promise<TableColumn[]> {
@@ -180,25 +155,21 @@ export class SQLiteConnector implements Connector {
       throw new Error("Not connected to SQLite database");
     }
     
-    return new Promise((resolve, reject) => {
-      this.db!.all<SQLiteTableInfo>(
-        `PRAGMA table_info(${tableName})`,
-        (err, rows) => {
-          if (err) {
-            reject(err);
-          } else {
-            // Convert SQLite schema format to our standard TableColumn format
-            const columns = rows.map(row => ({
-              column_name: row.name,
-              data_type: row.type,
-              is_nullable: row.notnull === 0 ? 'YES' : 'NO', // In SQLite, 0 means nullable
-              column_default: row.dflt_value
-            }));
-            resolve(columns);
-          }
-        }
-      );
-    });
+    try {
+      const rows = this.db.prepare(`PRAGMA table_info(${tableName})`).all() as SQLiteTableInfo[];
+      
+      // Convert SQLite schema format to our standard TableColumn format
+      const columns = rows.map(row => ({
+        column_name: row.name,
+        data_type: row.type,
+        is_nullable: row.notnull === 0 ? 'YES' : 'NO', // In SQLite, 0 means nullable
+        column_default: row.dflt_value
+      }));
+      
+      return columns;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async executeQuery(query: string): Promise<QueryResult> {
@@ -212,15 +183,12 @@ export class SQLiteConnector implements Connector {
       throw new Error(safetyCheck.message || "Query validation failed");
     }
 
-    return new Promise((resolve, reject) => {
-      this.db!.all(query, (err, rows) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve({ rows });
-        }
-      });
-    });
+    try {
+      const rows = this.db.prepare(query).all();
+      return { rows };
+    } catch (error) {
+      throw error;
+    }
   }
 
   validateQuery(query: string): { isValid: boolean; message?: string } {
