@@ -87,6 +87,8 @@ npx @bytebase/dbhub --transport sse --port 8080 --dsn "postgres://user:password@
 npx @bytebase/dbhub --transport sse --port 8080 --demo
 ```
 
+> Note: The demo mode includes a bundled SQLite sample "employee" database with tables for employees, departments, salaries, and more.
+
 ### Claude Desktop
 
 ![claude-desktop](https://raw.githubusercontent.com/bytebase/dbhub/main/resources/images/claude-desktop.webp)
@@ -205,6 +207,8 @@ DBHub supports the following database connection string formats:
 | dsn       | Database connection string                                      | Required if not in demo mode        |
 | transport | Transport mode: `stdio` or `sse`                                | `stdio`                             |
 | port      | HTTP server port (only applicable when using `--transport=sse`) | `8080`                              |
+
+The demo mode uses an in-memory SQLite database loaded with the [sample employee database](https://github.com/bytebase/dbhub/tree/main/resources/employee-sqlite) that includes tables for employees, departments, titles, and salaries.
 
 
 ## Development

@@ -12,8 +12,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Path to sample data files
-const DEMO_DATA_DIR = path.join(__dirname, '..', '..', 'resources', 'employee-sqlite');
+// Path to sample data files - will be bundled with the package
+const DEMO_DATA_DIR = path.join(__dirname, '..', 'resources', 'employee-sqlite');
 
 /**
  * Load SQL file contents
