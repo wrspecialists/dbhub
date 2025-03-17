@@ -5,7 +5,8 @@
     "moduleResolution": "NodeNext",
     "esModuleInterop": true,
     "outDir": "./dist",
-    "strict": true
+    "strict": true,
+    "lib": ["ES2020", "ES2021.Promise", "ES2022.Error"]
   },
   "include": ["src/**/*"]
 }

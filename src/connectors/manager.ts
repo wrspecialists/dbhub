@@ -19,7 +19,7 @@ export class ConnectorManager {
   /**
    * Initialize and connect to the database using a DSN
    */
-  async connectWithDSN(dsn: string): Promise<void> {
+  async connectWithDSN(dsn: string, initScript?: string): Promise<void> {
     // First try to find a connector that can handle this DSN
     let connector = ConnectorRegistry.getConnectorForDSN(dsn);
     
@@ -30,7 +30,7 @@ export class ConnectorManager {
     this.activeConnector = connector;
     
     // Connect to the database
-    await this.activeConnector.connect(dsn);
+    await this.activeConnector.connect(dsn, initScript);
     this.connected = true;
   }
 

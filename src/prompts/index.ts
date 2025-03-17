@@ -8,7 +8,7 @@ import { dbExplainerPromptHandler, dbExplainerSchema } from './db-explainer.js';
 export function registerPrompts(server: McpServer): void {
   // Register SQL Generator prompt
   server.prompt(
-    "generate-sql",
+    "generate_sql",
     "Generate SQL queries from natural language descriptions",
     sqlGeneratorSchema,
     sqlGeneratorPromptHandler
@@ -16,7 +16,7 @@ export function registerPrompts(server: McpServer): void {
 
   // Register Database Explainer prompt
   server.prompt(
-    "explain-db",
+    "explain_db",
     "Get explanations about database tables, columns, and structures",
     dbExplainerSchema,
     dbExplainerPromptHandler

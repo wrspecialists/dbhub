@@ -8,7 +8,8 @@ import { fileURLToPath } from 'url';
 
 import { ConnectorManager } from './connectors/manager.js';
 import { ConnectorRegistry } from './connectors/interface.js';
-import { resolveDSN, resolveTransport, resolvePort } from './config/env.js';
+import { resolveDSN, resolveTransport, resolvePort, isDemoMode } from './config/env.js';
+import { getSqliteInMemorySetupSql } from './config/demo-loader.js';
 import { registerResources } from './resources/index.js';
 import { registerTools } from './tools/index.js';
 import { registerPrompts } from './prompts/index.js';
@@ -28,7 +29,9 @@ export const SERVER_VERSION = packageJson.version;
 /**
  * Generate ASCII art banner with version information
  */
-export function generateBanner(version: string): string {
+export function generateBanner(version: string, isDemo: boolean = false): string {
+  const demoText = isDemo ? " [DEMO MODE]" : "";
+  
   return `
  _____  ____  _   _       _     
 |  __ \\|  _ \\| | | |     | |    
@@ -37,7 +40,7 @@ export function generateBanner(version: string): string {
 | |__| | |_) | | | | |_| | |_) |
 |_____/|____/|_| |_|\\__,_|_.__/ 
                                 
-v${version} - Universal Database MCP Server
+v${version}${demoText} - Universal Database MCP Server
 `;
 }
 
@@ -59,9 +62,10 @@ export async function main(): Promise<void> {
 ERROR: Database connection string (DSN) is required.
 Please provide the DSN in one of these ways (in order of priority):
 
-1. Command line argument: --dsn="your-connection-string"
-2. Environment variable: export DSN="your-connection-string"
-3. .env file: DSN=your-connection-string
+1. Use demo mode: --demo (uses in-memory SQLite with sample employee database)
+2. Command line argument: --dsn="your-connection-string"
+3. Environment variable: export DSN="your-connection-string"
+4. .env file: DSN=your-connection-string
 
 Example formats:
 ${sampleFormats}
@@ -86,7 +90,15 @@ See documentation for more details on configuring database connections.
     const connectorManager = new ConnectorManager();
     console.error(`Connecting with DSN: ${dsnData.dsn}`);
     console.error(`DSN source: ${dsnData.source}`);
-    await connectorManager.connectWithDSN(dsnData.dsn);
+    
+    // If in demo mode, load the employee database
+    if (dsnData.isDemo) {
+      console.error('Running in demo mode with sample employee database');
+      const initScript = getSqliteInMemorySetupSql();
+      await connectorManager.connectWithDSN(dsnData.dsn, initScript);
+    } else {
+      await connectorManager.connectWithDSN(dsnData.dsn);
+    }
     
     // Resolve transport type
     const transportData = resolveTransport();
@@ -94,7 +106,7 @@ See documentation for more details on configuring database connections.
     console.error(`Transport source: ${transportData.source}`);
     
     // Print ASCII art banner with version and slogan
-    console.error(generateBanner(SERVER_VERSION));
+    console.error(generateBanner(SERVER_VERSION, dsnData.isDemo));
     
     // Set up transport based on type
     if (transportData.type === 'sse') {

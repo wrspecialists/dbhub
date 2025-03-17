@@ -1,6 +1,6 @@
 {
   "name": "dbhub",
-  "version": "0.0.5",
+  "version": "0.1.0",
   "description": "Universal Database MCP Server",
   "main": "dist/index.js",
   "type": "module",
@@ -15,22 +15,29 @@
   "scripts": {
     "build": "tsup src/index.ts --format esm",
     "start": "node dist/index.js",
-    "dev": "NODE_ENV=development tsx src/index.ts"
+    "dev": "NODE_ENV=development tsx src/index.ts",
+    "crossdev": "cross-env NODE_ENV=development tsx src/index.ts"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.1",
+    "@types/sqlite3": "^5.1.0",
     "dotenv": "^16.4.7",
     "express": "^4.18.2",
+    "mssql": "^11.0.1",
+    "mysql2": "^3.13.0",
     "pg": "^8.13.3",
+    "sqlite3": "^5.1.7",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
+    "@types/mssql": "^9.1.7",
     "@types/node": "^22.13.10",
     "@types/pg": "^8.11.11",
+    "cross-env": "^7.0.3",
     "ts-node": "^10.9.2",
     "tsup": "^8.4.0",
     "tsx": "^4.19.3",

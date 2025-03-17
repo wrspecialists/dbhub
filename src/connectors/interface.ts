@@ -49,8 +49,8 @@ export interface Connector {
   /** DSN parser for this connector */
   dsnParser: DSNParser;
   
-  /** Connect to the database using DSN */
-  connect(dsn: string): Promise<void>;
+  /** Connect to the database using DSN, with optional init script */
+  connect(dsn: string, initScript?: string): Promise<void>;
   
   /** Close the connection */
   disconnect(): Promise<void>;
