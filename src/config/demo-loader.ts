@@ -17,7 +17,7 @@ const __dirname = path.dirname(__filename);
 let DEMO_DATA_DIR: string;
 const projectRootPath = path.join(__dirname, '..', '..', '..');
 const projectResourcesPath = path.join(projectRootPath, 'resources', 'employee-sqlite');
-const distPath = path.join(__dirname, '..', 'resources', 'employee-sqlite');
+const distPath = path.join(__dirname, 'resources', 'employee-sqlite');
 
 // First try the project root resources directory (for development)
 if (fs.existsSync(projectResourcesPath)) {
