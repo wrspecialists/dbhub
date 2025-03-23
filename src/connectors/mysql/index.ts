@@ -82,19 +82,46 @@ export class MySQLConnector implements Connector {
     }
   }
 
-  async getTables(): Promise<string[]> {
+  async getSchemas(): Promise<string[]> {
     if (!this.pool) {
       throw new Error('Not connected to database');
     }
     
     try {
-      // Get all tables from the current database
+      // In MySQL, schemas are equivalent to databases
+      const [rows] = await this.pool.query(`
+        SELECT schema_name 
+        FROM information_schema.schemata
+        ORDER BY schema_name
+      `) as [any[], any];
+      
+      return rows.map(row => row.schema_name);
+    } catch (error) {
+      console.error("Error getting schemas:", error);
+      throw error;
+    }
+  }
+
+  async getTables(schema?: string): Promise<string[]> {
+    if (!this.pool) {
+      throw new Error('Not connected to database');
+    }
+    
+    try {
+      // If schema is provided, use it, otherwise use current database
+      const schemaClause = schema ? 
+        'WHERE table_schema = ?' : 
+        'WHERE table_schema = DATABASE()';
+
+      const queryParams = schema ? [schema] : [];
+      
+      // Get all tables from the specified schema or current database
       const [rows] = await this.pool.query(`
         SELECT table_name 
         FROM information_schema.tables 
-        WHERE table_schema = DATABASE()
+        ${schemaClause}
         ORDER BY table_name
-      `) as [any[], any];
+      `, queryParams) as [any[], any];
       
       return rows.map(row => row.table_name);
     } catch (error) {
@@ -103,18 +130,25 @@ export class MySQLConnector implements Connector {
     }
   }
 
-  async tableExists(tableName: string): Promise<boolean> {
+  async tableExists(tableName: string, schema?: string): Promise<boolean> {
     if (!this.pool) {
       throw new Error('Not connected to database');
     }
     
     try {
+      // If schema is provided, use it, otherwise use current database
+      const schemaClause = schema ? 
+        'WHERE table_schema = ?' : 
+        'WHERE table_schema = DATABASE()';
+
+      const queryParams = schema ? [schema, tableName] : [tableName];
+
       const [rows] = await this.pool.query(`
         SELECT COUNT(*) as count
         FROM information_schema.tables 
-        WHERE table_schema = DATABASE() 
+        ${schemaClause} 
         AND table_name = ?
-      `, [tableName]) as [any[], any];
+      `, queryParams) as [any[], any];
       
       return rows[0].count > 0;
     } catch (error) {
@@ -123,12 +157,19 @@ export class MySQLConnector implements Connector {
     }
   }
 
-  async getTableSchema(tableName: string): Promise<TableColumn[]> {
+  async getTableSchema(tableName: string, schema?: string): Promise<TableColumn[]> {
     if (!this.pool) {
       throw new Error('Not connected to database');
     }
     
     try {
+      // If schema is provided, use it, otherwise use current database
+      const schemaClause = schema ? 
+        'WHERE table_schema = ?' : 
+        'WHERE table_schema = DATABASE()';
+
+      const queryParams = schema ? [schema, tableName] : [tableName];
+
       // Get table columns
       const [rows] = await this.pool.query(`
         SELECT 
@@ -137,10 +178,10 @@ export class MySQLConnector implements Connector {
           is_nullable,
           column_default
         FROM information_schema.columns
-        WHERE table_schema = DATABASE()
+        ${schemaClause}
         AND table_name = ?
         ORDER BY ordinal_position
-      `, [tableName]) as [any[], any];
+      `, queryParams) as [any[], any];
       
       return rows;
     } catch (error) {

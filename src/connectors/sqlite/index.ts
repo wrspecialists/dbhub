@@ -115,11 +115,22 @@ export class SQLiteConnector implements Connector {
     return Promise.resolve();
   }
 
-  async getTables(): Promise<string[]> {
+  async getSchemas(): Promise<string[]> {
     if (!this.db) {
       throw new Error("Not connected to SQLite database");
     }
     
+    // SQLite doesn't have the concept of schemas like PostgreSQL or MySQL
+    // Return the database name or 'main' for in-memory databases
+    return [this.dbPath === ':memory:' ? 'main' : this.dbPath];
+  }
+
+  async getTables(schema?: string): Promise<string[]> {
+    if (!this.db) {
+      throw new Error("Not connected to SQLite database");
+    }
+    
+    // In SQLite, schema parameter is ignored since SQLite doesn't support multiple schemas
     try {
       const rows = this.db.prepare(`
         SELECT name FROM sqlite_master 
@@ -133,11 +144,12 @@ export class SQLiteConnector implements Connector {
     }
   }
 
-  async tableExists(tableName: string): Promise<boolean> {
+  async tableExists(tableName: string, schema?: string): Promise<boolean> {
     if (!this.db) {
       throw new Error("Not connected to SQLite database");
     }
     
+    // In SQLite, schema parameter is ignored since SQLite doesn't support multiple schemas
     try {
       const row = this.db.prepare(`
         SELECT name FROM sqlite_master 
@@ -150,11 +162,12 @@ export class SQLiteConnector implements Connector {
     }
   }
 
-  async getTableSchema(tableName: string): Promise<TableColumn[]> {
+  async getTableSchema(tableName: string, schema?: string): Promise<TableColumn[]> {
     if (!this.db) {
       throw new Error("Not connected to SQLite database");
     }
     
+    // In SQLite, schema parameter is ignored since SQLite doesn't support multiple schemas
     try {
       const rows = this.db.prepare(`PRAGMA table_info(${tableName})`).all() as SQLiteTableInfo[];
       

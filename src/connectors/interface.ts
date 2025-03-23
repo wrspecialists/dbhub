@@ -55,14 +55,17 @@ export interface Connector {
   /** Close the connection */
   disconnect(): Promise<void>;
   
+  /** Get all schemas in the database */
+  getSchemas(): Promise<string[]>;
+  
   /** Get all tables in the database */
-  getTables(): Promise<string[]>;
+  getTables(schema?: string): Promise<string[]>;
   
   /** Get schema information for a specific table */
-  getTableSchema(tableName: string): Promise<TableColumn[]>;
+  getTableSchema(tableName: string, schema?: string): Promise<TableColumn[]>;
   
   /** Check if a table exists */
-  tableExists(tableName: string): Promise<boolean>;
+  tableExists(tableName: string, schema?: string): Promise<boolean>;
   
   /** Execute a query */
   executeQuery(query: string): Promise<QueryResult>;

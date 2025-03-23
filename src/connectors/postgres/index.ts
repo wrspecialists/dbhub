@@ -86,7 +86,7 @@ export class PostgresConnector implements Connector {
     }
   }
 
-  async getTables(): Promise<string[]> {
+  async getSchemas(): Promise<string[]> {
     if (!this.pool) {
       throw new Error('Not connected to database');
     }
@@ -94,11 +94,33 @@ export class PostgresConnector implements Connector {
     const client = await this.pool.connect();
     try {
       const result = await client.query(`
+        SELECT schema_name
+        FROM information_schema.schemata
+        WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
+        ORDER BY schema_name
+      `);
+      
+      return result.rows.map(row => row.schema_name);
+    } finally {
+      client.release();
+    }
+  }
+
+  async getTables(schema?: string): Promise<string[]> {
+    if (!this.pool) {
+      throw new Error('Not connected to database');
+    }
+    
+    const client = await this.pool.connect();
+    try {
+      const schemaToUse = schema || 'public';
+      
+      const result = await client.query(`
         SELECT table_name 
         FROM information_schema.tables 
-        WHERE table_schema = 'public'
+        WHERE table_schema = $1
         ORDER BY table_name
-      `);
+      `, [schemaToUse]);
       
       return result.rows.map(row => row.table_name);
     } finally {
@@ -106,20 +128,22 @@ export class PostgresConnector implements Connector {
     }
   }
 
-  async tableExists(tableName: string): Promise<boolean> {
+  async tableExists(tableName: string, schema?: string): Promise<boolean> {
     if (!this.pool) {
       throw new Error('Not connected to database');
     }
     
     const client = await this.pool.connect();
     try {
+      const schemaToUse = schema || 'public';
+      
       const result = await client.query(`
         SELECT EXISTS (
           SELECT FROM information_schema.tables 
-          WHERE table_schema = 'public' 
-          AND table_name = $1
+          WHERE table_schema = $1 
+          AND table_name = $2
         )
-      `, [tableName]);
+      `, [schemaToUse, tableName]);
       
       return result.rows[0].exists;
     } finally {
@@ -127,13 +151,15 @@ export class PostgresConnector implements Connector {
     }
   }
 
-  async getTableSchema(tableName: string): Promise<TableColumn[]> {
+  async getTableSchema(tableName: string, schema?: string): Promise<TableColumn[]> {
     if (!this.pool) {
       throw new Error('Not connected to database');
     }
     
     const client = await this.pool.connect();
     try {
+      const schemaToUse = schema || 'public';
+      
       // Get table columns
       const result = await client.query(`
         SELECT 
@@ -142,10 +168,10 @@ export class PostgresConnector implements Connector {
           is_nullable,
           column_default
         FROM information_schema.columns
-        WHERE table_schema = 'public'
-        AND table_name = $1
+        WHERE table_schema = $1
+        AND table_name = $2
         ORDER BY ordinal_position
-      `, [tableName]);
+      `, [schemaToUse, tableName]);
       
       return result.rows;
     } finally {

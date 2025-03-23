@@ -96,17 +96,52 @@ export class SQLServerConnector implements Connector {
     }
   }
 
-  async getTables(): Promise<string[]> {
+  async getSchemas(): Promise<string[]> {
     if (!this.connection) {
       throw new Error('Not connected to SQL Server database');
     }
 
     try {
       const result = await this.connection.request().query(`
+        SELECT SCHEMA_NAME 
+        FROM INFORMATION_SCHEMA.SCHEMATA 
+        ORDER BY SCHEMA_NAME
+      `);
+
+      return result.recordset.map((row) => row.SCHEMA_NAME);
+    } catch (error) {
+      throw new Error(`Failed to get schemas: ${(error as Error).message}`);
+    }
+  }
+
+  async getTables(schema?: string): Promise<string[]> {
+    if (!this.connection) {
+      throw new Error('Not connected to SQL Server database');
+    }
+
+    try {
+      let query = `
         SELECT TABLE_NAME 
         FROM INFORMATION_SCHEMA.TABLES 
-        ORDER BY TABLE_NAME
-      `);
+      `;
+      
+      const params: any[] = [];
+      
+      if (schema) {
+        query += ` WHERE TABLE_SCHEMA = @schema `;
+        params.push({ name: 'schema', value: schema, type: sql.VarChar });
+      }
+      
+      query += ` ORDER BY TABLE_NAME`;
+      
+      const request = this.connection.request();
+      
+      // Add parameters if any
+      params.forEach(param => {
+        request.input(param.name, param.type, param.value);
+      });
+      
+      const result = await request.query(query);
 
       return result.recordset.map((row) => row.TABLE_NAME);
     } catch (error) {
@@ -114,19 +149,27 @@ export class SQLServerConnector implements Connector {
     }
   }
 
-  async tableExists(tableName: string): Promise<boolean> {
+  async tableExists(tableName: string, schema?: string): Promise<boolean> {
     if (!this.connection) {
       throw new Error('Not connected to SQL Server database');
     }
 
     try {
-      const result = await this.connection.request()
-        .input('tableName', sql.VarChar, tableName)
-        .query(`
-          SELECT COUNT(*) as count
-          FROM INFORMATION_SCHEMA.TABLES
-          WHERE TABLE_NAME = @tableName
-        `);
+      const request = this.connection.request()
+        .input('tableName', sql.VarChar, tableName);
+      
+      let query = `
+        SELECT COUNT(*) as count
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_NAME = @tableName
+      `;
+      
+      if (schema) {
+        query += ` AND TABLE_SCHEMA = @schema`;
+        request.input('schema', sql.VarChar, schema);
+      }
+
+      const result = await request.query(query);
 
       return result.recordset[0].count > 0;
     } catch (error) {
@@ -134,24 +177,33 @@ export class SQLServerConnector implements Connector {
     }
   }
 
-  async getTableSchema(tableName: string): Promise<TableColumn[]> {
+  async getTableSchema(tableName: string, schema?: string): Promise<TableColumn[]> {
     if (!this.connection) {
       throw new Error('Not connected to SQL Server database');
     }
 
     try {
-      const result = await this.connection.request()
-        .input('tableName', sql.VarChar, tableName)
-        .query(`
-          SELECT 
-            COLUMN_NAME as column_name,
-            DATA_TYPE as data_type,
-            IS_NULLABLE as is_nullable,
-            COLUMN_DEFAULT as column_default
-          FROM INFORMATION_SCHEMA.COLUMNS
-          WHERE TABLE_NAME = @tableName
-          ORDER BY ORDINAL_POSITION
-        `);
+      const request = this.connection.request()
+        .input('tableName', sql.VarChar, tableName);
+      
+      let query = `
+        SELECT 
+          COLUMN_NAME as column_name,
+          DATA_TYPE as data_type,
+          IS_NULLABLE as is_nullable,
+          COLUMN_DEFAULT as column_default
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = @tableName
+      `;
+      
+      if (schema) {
+        query += ` AND TABLE_SCHEMA = @schema`;
+        request.input('schema', sql.VarChar, schema);
+      }
+      
+      query += ` ORDER BY ORDINAL_POSITION`;
+
+      const result = await request.query(query);
 
       return result.recordset;
     } catch (error) {
