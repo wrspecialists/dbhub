@@ -121,7 +121,9 @@ export class SQLiteConnector implements Connector {
     }
     
     // SQLite doesn't have the concept of schemas like PostgreSQL or MySQL
-    // Return the database name or 'main' for in-memory databases
+    // It has a concept of "attached databases" where each database has a name
+    // The default database is called 'main', and others can be attached with names
+    // We return the database name or 'main' for in-memory databases as the "schema"
     return [this.dbPath === ':memory:' ? 'main' : this.dbPath];
   }
 
@@ -130,7 +132,10 @@ export class SQLiteConnector implements Connector {
       throw new Error("Not connected to SQLite database");
     }
     
-    // In SQLite, schema parameter is ignored since SQLite doesn't support multiple schemas
+    // In SQLite, schema parameter is ignored since SQLite doesn't have schemas like PostgreSQL
+    // SQLite has a single namespace for tables within a database file
+    // You could use 'schema.table' syntax if you have attached databases, but we're
+    // accessing the 'main' database by default
     try {
       const rows = this.db.prepare(`
         SELECT name FROM sqlite_master 
@@ -149,7 +154,8 @@ export class SQLiteConnector implements Connector {
       throw new Error("Not connected to SQLite database");
     }
     
-    // In SQLite, schema parameter is ignored since SQLite doesn't support multiple schemas
+    // In SQLite, schema parameter is ignored since there's only one schema per database file
+    // All tables exist in a single namespace within the SQLite database
     try {
       const row = this.db.prepare(`
         SELECT name FROM sqlite_master 
@@ -167,7 +173,10 @@ export class SQLiteConnector implements Connector {
       throw new Error("Not connected to SQLite database");
     }
     
-    // In SQLite, schema parameter is ignored since SQLite doesn't support multiple schemas
+    // In SQLite, schema parameter is ignored for the following reasons:
+    // 1. SQLite doesn't have schemas in the same way as PostgreSQL or MySQL
+    // 2. Each SQLite database file is its own separate namespace
+    // 3. The PRAGMA commands operate on the current database connection
     try {
       const rows = this.db.prepare(`PRAGMA table_info(${tableName})`).all() as SQLiteTableInfo[];
       

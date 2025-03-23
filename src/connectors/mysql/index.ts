@@ -108,7 +108,9 @@ export class MySQLConnector implements Connector {
     }
     
     try {
-      // If schema is provided, use it, otherwise use current database
+      // In MySQL, if no schema is provided, use the current active database (DATABASE())
+      // MySQL uses the terms 'database' and 'schema' interchangeably
+      // The DATABASE() function returns the current database context
       const schemaClause = schema ? 
         'WHERE table_schema = ?' : 
         'WHERE table_schema = DATABASE()';
@@ -136,7 +138,8 @@ export class MySQLConnector implements Connector {
     }
     
     try {
-      // If schema is provided, use it, otherwise use current database
+      // In MySQL, if no schema is provided, use the current active database
+      // DATABASE() function returns the name of the current database
       const schemaClause = schema ? 
         'WHERE table_schema = ?' : 
         'WHERE table_schema = DATABASE()';
@@ -163,7 +166,9 @@ export class MySQLConnector implements Connector {
     }
     
     try {
-      // If schema is provided, use it, otherwise use current database
+      // In MySQL, schema is synonymous with database
+      // If no schema is provided, use the current database context via DATABASE() function
+      // This means tables will be retrieved from whatever database the connection is currently using
       const schemaClause = schema ? 
         'WHERE table_schema = ?' : 
         'WHERE table_schema = DATABASE()';

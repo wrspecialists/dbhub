@@ -120,26 +120,19 @@ export class SQLServerConnector implements Connector {
     }
 
     try {
-      let query = `
+      // In SQL Server, use 'dbo' as the default schema if none specified
+      // This is the default schema for SQL Server databases
+      const schemaToUse = schema || 'dbo';
+      
+      const request = this.connection.request()
+        .input('schema', sql.VarChar, schemaToUse);
+      
+      const query = `
         SELECT TABLE_NAME 
         FROM INFORMATION_SCHEMA.TABLES 
+        WHERE TABLE_SCHEMA = @schema
+        ORDER BY TABLE_NAME
       `;
-      
-      const params: any[] = [];
-      
-      if (schema) {
-        query += ` WHERE TABLE_SCHEMA = @schema `;
-        params.push({ name: 'schema', value: schema, type: sql.VarChar });
-      }
-      
-      query += ` ORDER BY TABLE_NAME`;
-      
-      const request = this.connection.request();
-      
-      // Add parameters if any
-      params.forEach(param => {
-        request.input(param.name, param.type, param.value);
-      });
       
       const result = await request.query(query);
 
@@ -155,20 +148,20 @@ export class SQLServerConnector implements Connector {
     }
 
     try {
-      const request = this.connection.request()
-        .input('tableName', sql.VarChar, tableName);
+      // In SQL Server, use 'dbo' as the default schema if none specified
+      const schemaToUse = schema || 'dbo';
       
-      let query = `
+      const request = this.connection.request()
+        .input('tableName', sql.VarChar, tableName)
+        .input('schema', sql.VarChar, schemaToUse);
+      
+      const query = `
         SELECT COUNT(*) as count
         FROM INFORMATION_SCHEMA.TABLES
         WHERE TABLE_NAME = @tableName
+        AND TABLE_SCHEMA = @schema
       `;
       
-      if (schema) {
-        query += ` AND TABLE_SCHEMA = @schema`;
-        request.input('schema', sql.VarChar, schema);
-      }
-
       const result = await request.query(query);
 
       return result.recordset[0].count > 0;
@@ -183,10 +176,14 @@ export class SQLServerConnector implements Connector {
     }
 
     try {
-      const request = this.connection.request()
-        .input('tableName', sql.VarChar, tableName);
+      // In SQL Server, use 'dbo' as the default schema if none specified
+      const schemaToUse = schema || 'dbo';
       
-      let query = `
+      const request = this.connection.request()
+        .input('tableName', sql.VarChar, tableName)
+        .input('schema', sql.VarChar, schemaToUse);
+      
+      const query = `
         SELECT 
           COLUMN_NAME as column_name,
           DATA_TYPE as data_type,
@@ -194,14 +191,9 @@ export class SQLServerConnector implements Connector {
           COLUMN_DEFAULT as column_default
         FROM INFORMATION_SCHEMA.COLUMNS
         WHERE TABLE_NAME = @tableName
+        AND TABLE_SCHEMA = @schema
+        ORDER BY ORDINAL_POSITION
       `;
-      
-      if (schema) {
-        query += ` AND TABLE_SCHEMA = @schema`;
-        request.input('schema', sql.VarChar, schema);
-      }
-      
-      query += ` ORDER BY ORDINAL_POSITION`;
 
       const result = await request.query(query);
 
