@@ -154,6 +154,57 @@ export class PostgresConnector implements Connector {
     }
   }
 
+  async getTableIndexes(tableName: string, schema?: string): Promise<TableIndex[]> {
+    if (!this.pool) {
+      throw new Error('Not connected to database');
+    }
+    
+    const client = await this.pool.connect();
+    try {
+      // In PostgreSQL, use 'public' as the default schema if none specified
+      const schemaToUse = schema || 'public';
+      
+      // Query to get all indexes for the table
+      const result = await client.query(`
+        SELECT 
+          i.relname as index_name,
+          array_agg(a.attname) as column_names,
+          ix.indisunique as is_unique,
+          ix.indisprimary as is_primary
+        FROM 
+          pg_class t,
+          pg_class i,
+          pg_index ix,
+          pg_attribute a,
+          pg_namespace ns
+        WHERE 
+          t.oid = ix.indrelid
+          AND i.oid = ix.indexrelid
+          AND a.attrelid = t.oid
+          AND a.attnum = ANY(ix.indkey)
+          AND t.relkind = 'r'
+          AND t.relname = $1
+          AND ns.oid = t.relnamespace
+          AND ns.nspname = $2
+        GROUP BY 
+          i.relname, 
+          ix.indisunique,
+          ix.indisprimary
+        ORDER BY 
+          i.relname
+      `, [tableName, schemaToUse]);
+      
+      return result.rows.map(row => ({
+        index_name: row.index_name,
+        column_names: row.column_names,
+        is_unique: row.is_unique,
+        is_primary: row.is_primary
+      }));
+    } finally {
+      client.release();
+    }
+  }
+
   async getTableSchema(tableName: string, schema?: string): Promise<TableColumn[]> {
     if (!this.pool) {
       throw new Error('Not connected to database');

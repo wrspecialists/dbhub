@@ -160,6 +160,79 @@ export class MySQLConnector implements Connector {
     }
   }
 
+  async getTableIndexes(tableName: string, schema?: string): Promise<TableIndex[]> {
+    if (!this.pool) {
+      throw new Error('Not connected to database');
+    }
+    
+    try {
+      // In MySQL, if no schema is provided, use the current active database
+      const schemaClause = schema ? 
+        'TABLE_SCHEMA = ?' : 
+        'TABLE_SCHEMA = DATABASE()';
+
+      const queryParams = schema ? [schema, tableName] : [tableName];
+      
+      // Get information about indexes
+      const [indexRows] = await this.pool.query(`
+        SELECT 
+          INDEX_NAME,
+          COLUMN_NAME,
+          NON_UNIQUE,
+          SEQ_IN_INDEX
+        FROM 
+          information_schema.STATISTICS 
+        WHERE 
+          ${schemaClause}
+          AND TABLE_NAME = ? 
+        ORDER BY 
+          INDEX_NAME, 
+          SEQ_IN_INDEX
+      `, queryParams) as [any[], any];
+      
+      // Process the results to group columns by index
+      const indexMap = new Map<string, {
+        columns: string[],
+        is_unique: boolean,
+        is_primary: boolean
+      }>();
+      
+      for (const row of indexRows) {
+        const indexName = row.INDEX_NAME;
+        const columnName = row.COLUMN_NAME;
+        const isUnique = row.NON_UNIQUE === 0; // In MySQL, NON_UNIQUE=0 means the index is unique
+        const isPrimary = indexName === 'PRIMARY';
+        
+        if (!indexMap.has(indexName)) {
+          indexMap.set(indexName, {
+            columns: [],
+            is_unique: isUnique,
+            is_primary: isPrimary
+          });
+        }
+        
+        const indexInfo = indexMap.get(indexName)!;
+        indexInfo.columns.push(columnName);
+      }
+      
+      // Convert the map to the expected TableIndex format
+      const results: TableIndex[] = [];
+      indexMap.forEach((indexInfo, indexName) => {
+        results.push({
+          index_name: indexName,
+          column_names: indexInfo.columns,
+          is_unique: indexInfo.is_unique,
+          is_primary: indexInfo.is_primary
+        });
+      });
+      
+      return results;
+    } catch (error) {
+      console.error("Error getting table indexes:", error);
+      throw error;
+    }
+  }
+
   async getTableSchema(tableName: string, schema?: string): Promise<TableColumn[]> {
     if (!this.pool) {
       throw new Error('Not connected to database');

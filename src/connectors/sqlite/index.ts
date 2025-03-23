@@ -168,6 +168,66 @@ export class SQLiteConnector implements Connector {
     }
   }
 
+  async getTableIndexes(tableName: string, schema?: string): Promise<TableIndex[]> {
+    if (!this.db) {
+      throw new Error("Not connected to SQLite database");
+    }
+    
+    // In SQLite, schema parameter is ignored (no schema concept)
+    try {
+      // Get all indexes for the specified table
+      const indexInfoRows = this.db.prepare(`
+        SELECT 
+          name as index_name,
+          CASE 
+            WHEN "unique" = 1 THEN 1
+            ELSE 0
+          END as is_unique
+        FROM sqlite_master 
+        WHERE type = 'index' 
+        AND tbl_name = ?
+      `).all(tableName) as { index_name: string, is_unique: number }[];
+      
+      // Get the primary key info
+      const tableInfo = this.db.prepare(`PRAGMA table_info(${tableName})`).all() as SQLiteTableInfo[];
+      
+      // Find primary key columns
+      const pkColumns = tableInfo
+        .filter(col => col.pk > 0)
+        .map(col => col.name);
+      
+      const results: TableIndex[] = [];
+      
+      // Add regular indexes
+      for (const indexInfo of indexInfoRows) {
+        // Get the columns for this index
+        const indexDetailRows = this.db.prepare(`PRAGMA index_info(${indexInfo.index_name})`).all() as { name: string }[];
+        const columnNames = indexDetailRows.map(row => row.name);
+        
+        results.push({
+          index_name: indexInfo.index_name,
+          column_names: columnNames,
+          is_unique: indexInfo.is_unique === 1,
+          is_primary: false
+        });
+      }
+      
+      // Add primary key if it exists
+      if (pkColumns.length > 0) {
+        results.push({
+          index_name: 'PRIMARY',
+          column_names: pkColumns,
+          is_unique: true,
+          is_primary: true
+        });
+      }
+      
+      return results;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async getTableSchema(tableName: string, schema?: string): Promise<TableColumn[]> {
     if (!this.db) {
       throw new Error("Not connected to SQLite database");

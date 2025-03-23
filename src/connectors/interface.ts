@@ -14,6 +14,13 @@ export interface TableColumn {
   column_default: string | null;
 }
 
+export interface TableIndex {
+  index_name: string;
+  column_names: string[];
+  is_unique: boolean;
+  is_primary: boolean;
+}
+
 /**
  * Connection string (DSN) parser interface
  * Each connector needs to implement its own DSN parser
@@ -89,6 +96,15 @@ export interface Connector {
    * @returns Promise with boolean indicating if table exists
    */
   tableExists(tableName: string, schema?: string): Promise<boolean>;
+  
+  /** 
+   * Get indexes for a specific table
+   * @param tableName The name of the table to get indexes for
+   * @param schema Optional schema name. If not provided, implementation should use the default schema
+   *   as described in getTables method.
+   * @returns Promise with array of index information
+   */
+  getTableIndexes(tableName: string, schema?: string): Promise<TableIndex[]>;
   
   /** Execute a query */
   executeQuery(query: string): Promise<QueryResult>;
