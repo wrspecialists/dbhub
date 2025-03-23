@@ -36,24 +36,26 @@ https://demo.dbhub.ai/sse connects a [sample employee database](https://github.c
 
 ### Database Resources
 
-| Resource |        URI Format         | PostgreSQL | MySQL | SQL Server | SQLite |
-| -------- | :-----------------------: | :--------: | :---: | :--------: | :----: |
-| Tables   |       `db://tables`       |     ✅     |  ✅   |     ✅     |   ✅   |
-| Schema   | `db://schema/{tableName}` |     ✅     |  ✅   |     ✅     |   ✅   |
+| Resource Name             | URI Format                                             | PostgreSQL | MySQL | SQL Server | SQLite |
+| ------------------------- | ------------------------------------------------------ | :--------: | :---: | :--------: | :----: |
+| schemas                   | `db://schemas`                                         |     ✅     |  ✅   |     ✅     |   ✅   |
+| tables_in_schema          | `db://schemas/{schemaName}/tables`                     |     ✅     |  ✅   |     ✅     |   ✅   |
+| table_structure_in_schema | `db://schemas/{schemaName}/tables/{tableName}`         |     ✅     |  ✅   |     ✅     |   ✅   |
+| indexes_in_table          | `db://schemas/{schemaName}/tables/{tableName}/indexes` |     ✅     |  ✅   |     ✅     |   ✅   |
 
 ### Database Tools
 
-| Tool            |   Command Name    | PostgreSQL | MySQL | SQL Server | SQLite |
-| --------------- | :---------------: | :--------: | :---: | :--------: | :----: |
-| Execute Query   |    `run_query`    |     ✅     |  ✅   |     ✅     |   ✅   |
+| Tool            | Command Name      | PostgreSQL | MySQL | SQL Server | SQLite |
+| --------------- | ----------------- | :--------: | :---: | :--------: | :----: |
+| Execute Query   | `run_query`       |     ✅     |  ✅   |     ✅     |   ✅   |
 | List Connectors | `list_connectors` |     ✅     |  ✅   |     ✅     |   ✅   |
 
 ### Prompt Capabilities
 
-| Prompt              |  Command Name  | PostgreSQL | MySQL | SQL Server | SQLite |
-| ------------------- | :------------: | :--------: | :---: | :--------: | :----: |
-| Generate SQL        | `generate_sql` |     ✅     |  ✅   |     ✅     |   ✅   |
-| Explain DB Elements |  `explain_db`  |     ✅     |  ✅   |     ✅     |   ✅   |
+| Prompt              | Command Name    | PostgreSQL | MySQL | SQL Server | SQLite |
+| ------------------- | --------------- | :--------: | :---: | :--------: | :----: |
+| Generate SQL        | `generate_sql`  |     ✅     |  ✅   |     ✅     |   ✅   |
+| Explain DB Elements | `explain_db`    |     ✅     |  ✅   |     ✅     |   ✅   |
 
 ## Installation
 
@@ -179,12 +181,12 @@ For real databases, a Database Source Name (DSN) is required. You can provide th
 
 DBHub supports the following database connection string formats:
 
-| Database   | DSN Format                                               | Example                                                          |
-| ---------- | -------------------------------------------------------- | ---------------------------------------------------------------- |
-| PostgreSQL | `postgres://[user]:[password]@[host]:[port]/[database]`  | `postgres://user:password@localhost:5432/dbname?sslmode=disable` |
-| SQLite     | `sqlite:///[path/to/file]` or `sqlite::memory:`          | `sqlite:///path/to/database.db` or `sqlite::memory:`             |
-| SQL Server | `sqlserver://[user]:[password]@[host]:[port]/[database]` | `sqlserver://user:password@localhost:1433/dbname`                |
-| MySQL      | `mysql://[user]:[password]@[host]:[port]/[database]`     | `mysql://user:password@localhost:3306/dbname`                    |
+| Database   | DSN Format                                               | Example                                                           |
+| ---------- | -------------------------------------------------------- | ----------------------------------------------------------------- |
+| PostgreSQL | `postgres://[user]:[password]@[host]:[port]/[database]`  | `postgres://user:password@localhost:5432/dbname?sslmode=disable`  |
+| SQLite     | `sqlite:///[path/to/file]` or `sqlite::memory:`          | `sqlite:///path/to/database.db` or `sqlite::memory:`              |
+| SQL Server | `sqlserver://[user]:[password]@[host]:[port]/[database]` | `sqlserver://user:password@localhost:1433/dbname`                 |
+| MySQL      | `mysql://[user]:[password]@[host]:[port]/[database]`     | `mysql://user:password@localhost:3306/dbname`                     |
 
 ### Transport
 
@@ -202,13 +204,13 @@ DBHub supports the following database connection string formats:
 ### Command line options
 
 | Option    | Description                                                     | Default                      |
-| :-------- | :-------------------------------------------------------------- | :--------------------------- |
+| --------- | --------------------------------------------------------------- | ---------------------------- |
 | demo      | Run in demo mode with sample employee database                  | `false`                      |
 | dsn       | Database connection string                                      | Required if not in demo mode |
 | transport | Transport mode: `stdio` or `sse`                                | `stdio`                      |
 | port      | HTTP server port (only applicable when using `--transport=sse`) | `8080`                       |
 
-The demo mode uses an in-memory SQLite database loaded with the [sample employee database](https://github.com/bytebase/dbhub/tree/main/resources/employee-sqlite) that includes tables for employees, departments, titles, and salaries.
+The demo mode uses an in-memory SQLite database loaded with the [sample employee database](https://github.com/bytebase/dbhub/tree/main/resources/employee-sqlite) that includes tables for employees, departments, titles, salaries, department employees, and department managers. The sample database includes SQL scripts for table creation, data loading, and testing.
 
 ## Development
 
