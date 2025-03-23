@@ -21,14 +21,14 @@ export function registerResources(server: McpServer): void {
 
   // Allow listing tables within a specific schema
   server.resource(
-    "tables-in-schema",
+    "tables_in_schema",
     new ResourceTemplate("db://schemas/{schemaName}/tables", { list: undefined }),
     tablesResourceHandler
   );
 
-  // Resource for getting table schema in a specific schema
+  // Resource for getting table structure within a specific database schema
   server.resource(
-    "schema-in-schema",
+    "table_structure_in_schema",
     new ResourceTemplate("db://schemas/{schemaName}/schema/{tableName}", { list: undefined }),
     schemaResourceHandler
   );
