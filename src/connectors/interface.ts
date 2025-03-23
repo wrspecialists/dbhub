@@ -55,16 +55,39 @@ export interface Connector {
   /** Close the connection */
   disconnect(): Promise<void>;
   
-  /** Get all schemas in the database */
+  /** 
+   * Get all schemas in the database 
+   * @returns Promise with array of schema names
+   */
   getSchemas(): Promise<string[]>;
   
-  /** Get all tables in the database */
+  /** 
+   * Get all tables in the database or in a specific schema
+   * @param schema Optional schema name. If not provided, implementation should use the default schema:
+   *   - PostgreSQL: 'public' schema
+   *   - SQL Server: 'dbo' schema
+   *   - MySQL: Current active database from connection (DATABASE())
+   *   - SQLite: Main database (schema concept doesn't exist in SQLite)
+   * @returns Promise with array of table names
+   */
   getTables(schema?: string): Promise<string[]>;
   
-  /** Get schema information for a specific table */
+  /** 
+   * Get schema information for a specific table
+   * @param tableName The name of the table to get schema information for
+   * @param schema Optional schema name. If not provided, implementation should use the default schema
+   *   as described in getTables method.
+   * @returns Promise with array of column information
+   */
   getTableSchema(tableName: string, schema?: string): Promise<TableColumn[]>;
   
-  /** Check if a table exists */
+  /** 
+   * Check if a table exists
+   * @param tableName The name of the table to check
+   * @param schema Optional schema name. If not provided, implementation should use the default schema
+   *   as described in getTables method.
+   * @returns Promise with boolean indicating if table exists
+   */
   tableExists(tableName: string, schema?: string): Promise<boolean>;
   
   /** Execute a query */
