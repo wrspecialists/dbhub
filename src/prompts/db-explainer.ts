@@ -4,30 +4,55 @@ import { formatPromptSuccessResponse, formatPromptErrorResponse } from '../utils
 
 // Schema for database explainer prompt
 export const dbExplainerSchema = {
-  target: z.string().describe("Name of the table, column, or database to explain"),
-  schema: z.string().optional().describe("Optional database schema to use")
+  schema: z.string().optional().describe("Optional database schema to use"),
+  table: z.string().optional().describe("Optional specific table to explain")
 };
 
 /**
  * Database Explainer Prompt Handler
  * Provides explanations about database elements
  */
-export async function dbExplainerPromptHandler({ target, schema }: { target: string, schema?: string }, _extra: any) {
+export async function dbExplainerPromptHandler({ schema, table }: { 
+  schema?: string, 
+  table?: string 
+}, _extra: any) {
   try {
     const connector = ConnectorManager.getCurrentConnector();
     
-    // First check if this is a table name
-    const tables = await connector.getTables(schema);
-    const normalizedTarget = target.toLowerCase();
+    // Verify schema exists if provided
+    if (schema) {
+      const availableSchemas = await connector.getSchemas();
+      if (!availableSchemas.includes(schema)) {
+        return formatPromptErrorResponse(
+          `Schema '${schema}' does not exist or cannot be accessed. Available schemas: ${availableSchemas.join(', ')}`,
+          "SCHEMA_NOT_FOUND"
+        );
+      }
+    }
     
-    // Check if target matches a table
-    const matchingTable = tables.find(t => t.toLowerCase() === normalizedTarget);
-    if (matchingTable) {
-      // Explain the table
-      const columns = await connector.getTableSchema(matchingTable, schema);
-      
-      // Create a table structure description
-      const tableDescription = `Table: ${matchingTable}
+    // Get list of available tables in the specified schema
+    const tables = await connector.getTables(schema);
+    
+    // Process the table parameter if provided
+    const normalizedTable = table?.toLowerCase() || '';
+    
+    // Check if table parameter matches a table in the database
+    const matchingTable = tables.find(t => t.toLowerCase() === normalizedTable);
+    if (matchingTable && table) {
+      try {
+        // Explain the table
+        const columns = await connector.getTableSchema(matchingTable, schema);
+        
+        if (columns.length === 0) {
+          return formatPromptErrorResponse(
+            `Table '${matchingTable}' exists but has no columns or cannot be accessed.`,
+            "EMPTY_TABLE_SCHEMA"
+          );
+        }
+        
+        // Create a table structure description
+        const schemaInfo = schema ? ` in schema '${schema}'` : '';
+        const tableDescription = `Table: ${matchingTable}${schemaInfo}
       
 Structure:
 ${columns.map(col => `- ${col.column_name} (${col.data_type})${col.is_nullable === 'YES' ? ', nullable' : ''}${col.column_default ? `, default: ${col.column_default}` : ''}`).join('\n')}
@@ -38,13 +63,29 @@ This table appears to store ${determineTablePurpose(matchingTable, columns)}
 Relationships:
 ${determineRelationships(matchingTable, columns)}`;
 
-      return formatPromptSuccessResponse(tableDescription);
+        return formatPromptSuccessResponse(tableDescription);
+      } catch (error) {
+        return formatPromptErrorResponse(
+          `Error retrieving schema for table '${matchingTable}': ${(error as Error).message}`,
+          "TABLE_SCHEMA_ERROR"
+        );
+      }
     }
     
-    // Check if target is a table.column format
-    if (target.includes('.')) {
-      const [tableName, columnName] = target.split('.');
-      if (tables.find(t => t.toLowerCase() === tableName.toLowerCase())) {
+    // Check if table parameter has a table.column format
+    if (table && table.includes('.')) {
+      const [tableName, columnName] = table.split('.');
+      const tableExists = tables.find(t => t.toLowerCase() === tableName.toLowerCase());
+      
+      if (!tableExists) {
+        // Table part of table.column doesn't exist
+        return formatPromptErrorResponse(
+          `Table '${tableName}' does not exist in schema '${schema || 'default'}'. Available tables: ${tables.slice(0, 10).join(', ')}${tables.length > 10 ? '...' : ''}`,
+          "TABLE_NOT_FOUND"
+        );
+      }
+      
+      try {
         // Get column info
         const columns = await connector.getTableSchema(tableName, schema);
         const column = columns.find(c => c.column_name.toLowerCase() === columnName.toLowerCase());
@@ -60,13 +101,28 @@ Purpose:
 ${determineColumnPurpose(column.column_name, column.data_type)}`;
 
           return formatPromptSuccessResponse(columnDescription);
+        } else {
+          // Column doesn't exist in the table
+          return formatPromptErrorResponse(
+            `Column '${columnName}' does not exist in table '${tableName}'. Available columns: ${columns.map(c => c.column_name).join(', ')}`,
+            "COLUMN_NOT_FOUND"
+          );
         }
+      } catch (error) {
+        return formatPromptErrorResponse(
+          `Error accessing table schema: ${(error as Error).message}`,
+          "SCHEMA_ACCESS_ERROR"
+        );
       }
     }
     
-    // If target is not a specific table or column, provide database overview
-    // Determine if 'database' or similar term is in the target
-    if (['database', 'db', 'schema', 'overview', 'all'].includes(normalizedTarget)) {
+    // If no specific table was provided or the table refers to the database itself,
+    // provide a database overview
+    // This will trigger if:
+    // 1. No table parameter was provided
+    // 2. The table parameter is a database overview keyword
+    if (!table || 
+        ['database', 'db', 'schema', 'overview', 'all'].includes(normalizedTable)) {
       const schemaInfo = schema ? `in schema '${schema}'` : 'across all schemas';
       
       let dbOverview = `Database Overview ${schemaInfo}
@@ -79,23 +135,29 @@ This database ${describeDatabasePurpose(tables)}`;
       return formatPromptSuccessResponse(dbOverview);
     }
     
-    // If no match is found but the target could be a partial match
-    const possibleTableMatches = tables.filter(t => 
-      t.toLowerCase().includes(normalizedTarget) || 
-      normalizedTarget.includes(t.toLowerCase())
-    );
-    
-    if (possibleTableMatches.length > 0) {
-      return formatPromptSuccessResponse(
-        `Could not find exact match for "${target}". Did you mean one of these tables?\n\n${possibleTableMatches.join('\n')}`
+    // If we get here and table was provided but not found,
+    // check for partial matches to suggest alternatives
+    if (table && !normalizedTable.includes('.')) {
+      // Search for partial matches
+      const possibleTableMatches = tables.filter(t => 
+        t.toLowerCase().includes(normalizedTable) || 
+        normalizedTable.includes(t.toLowerCase())
       );
+      
+      if (possibleTableMatches.length > 0) {
+        // Found partial matches, suggest them to the user
+        return formatPromptSuccessResponse(
+          `Table "${table}" not found. Did you mean one of these tables?\n\n${possibleTableMatches.join('\n')}`
+        );
+      } else {
+        // No matches at all, return a clear error with available tables
+        const schemaInfo = schema ? `in schema '${schema}'` : 'in the database';
+        return formatPromptErrorResponse(
+          `Table "${table}" does not exist ${schemaInfo}. Available tables: ${tables.slice(0, 10).join(', ')}${tables.length > 10 ? '...' : ''}`,
+          "TABLE_NOT_FOUND"
+        );
+      }
     }
-    
-    // No match found
-    return formatPromptErrorResponse(
-      `Could not find a table, column, or database feature matching "${target}"`,
-      "NOT_FOUND"
-    );
     
   } catch (error) {
     return formatPromptErrorResponse(
