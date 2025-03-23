@@ -31,7 +31,7 @@ export function registerResources(server: McpServer): void {
   // Resource for getting table structure within a specific database schema
   server.resource(
     "table_structure_in_schema",
-    new ResourceTemplate("db://schemas/{schemaName}/schema/{tableName}", { list: undefined }),
+    new ResourceTemplate("db://schemas/{schemaName}/tables/{tableName}", { list: undefined }),
     schemaResourceHandler
   );
   
