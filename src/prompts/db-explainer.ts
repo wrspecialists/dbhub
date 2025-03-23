@@ -4,26 +4,27 @@ import { formatPromptSuccessResponse, formatPromptErrorResponse } from '../utils
 
 // Schema for database explainer prompt
 export const dbExplainerSchema = {
-  target: z.string().describe("Name of the table, column, or database to explain")
+  target: z.string().describe("Name of the table, column, or database to explain"),
+  schema: z.string().optional().describe("Optional database schema to use")
 };
 
 /**
  * Database Explainer Prompt Handler
  * Provides explanations about database elements
  */
-export async function dbExplainerPromptHandler({ target }: { target: string }, _extra: any) {
+export async function dbExplainerPromptHandler({ target, schema }: { target: string, schema?: string }, _extra: any) {
   try {
     const connector = ConnectorManager.getCurrentConnector();
     
     // First check if this is a table name
-    const tables = await connector.getTables();
+    const tables = await connector.getTables(schema);
     const normalizedTarget = target.toLowerCase();
     
     // Check if target matches a table
     const matchingTable = tables.find(t => t.toLowerCase() === normalizedTarget);
     if (matchingTable) {
       // Explain the table
-      const columns = await connector.getTableSchema(matchingTable);
+      const columns = await connector.getTableSchema(matchingTable, schema);
       
       // Create a table structure description
       const tableDescription = `Table: ${matchingTable}
@@ -45,7 +46,7 @@ ${determineRelationships(matchingTable, columns)}`;
       const [tableName, columnName] = target.split('.');
       if (tables.find(t => t.toLowerCase() === tableName.toLowerCase())) {
         // Get column info
-        const columns = await connector.getTableSchema(tableName);
+        const columns = await connector.getTableSchema(tableName, schema);
         const column = columns.find(c => c.column_name.toLowerCase() === columnName.toLowerCase());
         
         if (column) {
@@ -66,7 +67,9 @@ ${determineColumnPurpose(column.column_name, column.data_type)}`;
     // If target is not a specific table or column, provide database overview
     // Determine if 'database' or similar term is in the target
     if (['database', 'db', 'schema', 'overview', 'all'].includes(normalizedTarget)) {
-      let dbOverview = `Database Overview
+      const schemaInfo = schema ? `in schema '${schema}'` : 'across all schemas';
+      
+      let dbOverview = `Database Overview ${schemaInfo}
 
 Tables: ${tables.length}
 ${tables.map(t => `- ${t}`).join('\n')}

@@ -5,16 +5,18 @@ import { formatPromptSuccessResponse, formatPromptErrorResponse } from '../utils
 // Schema for SQL generator prompt
 export const sqlGeneratorSchema = {
   description: z.string().describe("Natural language description of the SQL query to generate"),
-  dialect: z.enum(["postgres", "sqlite"]).optional().describe("SQL dialect to use (optional)")
+  dialect: z.enum(["postgres", "sqlite"]).optional().describe("SQL dialect to use (optional)"),
+  schema: z.string().optional().describe("Optional database schema to use")
 };
 
 /**
  * SQL Generator Prompt Handler
  * Generates SQL queries from natural language descriptions
  */
-export async function sqlGeneratorPromptHandler({ description, dialect }: {
+export async function sqlGeneratorPromptHandler({ description, dialect, schema }: {
   description: string;
   dialect?: "postgres" | "sqlite";
+  schema?: string;
 }, _extra: any) {
   try {
     // Get current connector to determine dialect if not specified
@@ -26,11 +28,11 @@ export async function sqlGeneratorPromptHandler({ description, dialect }: {
       (connector.id === 'sqlite' ? 'sqlite' : 'postgres'));
     
     // Get schema information to help with table/column references
-    const tables = await connector.getTables();
+    const tables = await connector.getTables(schema);
     const tableSchemas = await Promise.all(
       tables.map(async (table) => {
         try {
-          const columns = await connector.getTableSchema(table);
+          const columns = await connector.getTableSchema(table, schema);
           return {
             table,
             columns: columns.map(col => ({
@@ -73,10 +75,12 @@ export async function sqlGeneratorPromptHandler({ description, dialect }: {
     
     // Build a prompt that would help generate the SQL
     // In a real implementation, this would call an AI model
+    const schemaInfo = schema ? `in schema '${schema}'` : 'across all schemas';
     const prompt = `
 Generate a ${sqlDialect} SQL query based on this description: "${description}"
 
 ${schemaContext}
+Working ${schemaInfo}
 
 The query should:
 1. Be written for ${sqlDialect} dialect
@@ -93,7 +97,8 @@ The query should:
     // Very simple pattern matching for demo purposes
     // In a real implementation, this would use a language model
     if (description.toLowerCase().includes('count')) {
-      generatedSQL = `-- Count query generated from: "${description}"
+      const schemaPrefix = schema ? `-- Schema: ${schema}\n` : '';
+      generatedSQL = `${schemaPrefix}-- Count query generated from: "${description}"
 SELECT COUNT(*) AS count 
 FROM ${accessibleSchemas.length > 0 ? accessibleSchemas[0]!.table : 'table_name'};`;
     } else if (description.toLowerCase().includes('average') || description.toLowerCase().includes('avg')) {
@@ -102,11 +107,13 @@ FROM ${accessibleSchemas.length > 0 ? accessibleSchemas[0]!.table : 'table_name'
         ? accessibleSchemas[0]!.columns.find(col => ['int', 'numeric', 'decimal', 'float', 'real', 'double'].some(t => col.type.includes(t)))?.name || 'numeric_column'
         : 'numeric_column';
         
-      generatedSQL = `-- Average query generated from: "${description}"
+      const schemaPrefix = schema ? `-- Schema: ${schema}\n` : '';
+      generatedSQL = `${schemaPrefix}-- Average query generated from: "${description}"
 SELECT AVG(${numericColumn}) AS average
 FROM ${table};`;
     } else if (description.toLowerCase().includes('join')) {
-      generatedSQL = `-- Join query generated from: "${description}"
+      const schemaPrefix = schema ? `-- Schema: ${schema}\n` : '';
+      generatedSQL = `${schemaPrefix}-- Join query generated from: "${description}"
 SELECT t1.*, t2.*
 FROM ${accessibleSchemas.length > 0 ? accessibleSchemas[0]?.table : 'table1'} t1
 JOIN ${accessibleSchemas.length > 1 ? accessibleSchemas[1]?.table : 'table2'} t2
@@ -114,7 +121,8 @@ JOIN ${accessibleSchemas.length > 1 ? accessibleSchemas[1]?.table : 'table2'} t2
     } else {
       // Default to a simple SELECT
       const table = accessibleSchemas.length > 0 ? accessibleSchemas[0]!.table : 'table_name';
-      generatedSQL = `-- Query generated from: "${description}"
+      const schemaPrefix = schema ? `-- Schema: ${schema}\n` : '';
+      generatedSQL = `${schemaPrefix}-- Query generated from: "${description}"
 SELECT * 
 FROM ${table}
 LIMIT 10;`;

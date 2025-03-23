@@ -19,25 +19,11 @@ export function registerResources(server: McpServer): void {
     schemasResourceHandler
   );
 
-  // Resource for listing all tables
-  server.resource(
-    "tables",
-    new ResourceTemplate("db://tables", { list: undefined }),
-    tablesResourceHandler
-  );
-
   // Allow listing tables within a specific schema
   server.resource(
     "tables-in-schema",
     new ResourceTemplate("db://schemas/{schemaName}/tables", { list: undefined }),
     tablesResourceHandler
-  );
-
-  // Resource for getting table schema
-  server.resource(
-    "schema",
-    new ResourceTemplate("db://schema/{tableName}", { list: undefined }),
-    schemaResourceHandler
   );
 
   // Resource for getting table schema in a specific schema
