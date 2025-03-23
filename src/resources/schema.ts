@@ -20,7 +20,30 @@ export async function schemaResourceHandler(uri: URL, variables: Variables, _ext
     undefined;
   
   try {
-    // If table doesn't exist, getTableSchema will throw an error
+    // If a schema name was provided, verify that it exists
+    if (schemaName) {
+      const availableSchemas = await connector.getSchemas();
+      if (!availableSchemas.includes(schemaName)) {
+        return createResourceErrorResponse(
+          uri.href,
+          `Schema '${schemaName}' does not exist or cannot be accessed`,
+          "SCHEMA_NOT_FOUND"
+        );
+      }
+    }
+    
+    // Check if the table exists in the schema before getting its structure
+    const tableExists = await connector.tableExists(tableName, schemaName);
+    if (!tableExists) {
+      const schemaInfo = schemaName ? ` in schema '${schemaName}'` : '';
+      return createResourceErrorResponse(
+        uri.href,
+        `Table '${tableName}'${schemaInfo} does not exist or cannot be accessed`,
+        "TABLE_NOT_FOUND"
+      );
+    }
+    
+    // Get the table schema now that we know it exists
     const columns = await connector.getTableSchema(tableName, schemaName);
     
     // Create a more structured response
@@ -42,12 +65,11 @@ export async function schemaResourceHandler(uri: URL, variables: Variables, _ext
     // Use the utility to create a standardized response
     return createResourceSuccessResponse(uri.href, responseData);
   } catch (error) {
-    // Use the utility to create a standardized error response
-    const schemaInfo = schemaName ? ` in schema '${schemaName}'` : '';
+    // Handle any other errors that might occur
     return createResourceErrorResponse(
       uri.href,
-      `Table '${tableName}'${schemaInfo} does not exist or cannot be accessed`,
-      "TABLE_NOT_FOUND"
+      `Error retrieving schema: ${(error as Error).message}`,
+      "SCHEMA_RETRIEVAL_ERROR"
     );
   }
 }
