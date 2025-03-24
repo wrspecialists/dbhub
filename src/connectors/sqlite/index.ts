@@ -254,6 +254,38 @@ export class SQLiteConnector implements Connector {
     }
   }
 
+  async getStoredProcedures(schema?: string): Promise<string[]> {
+    if (!this.db) {
+      throw new Error("Not connected to SQLite database");
+    }
+    
+    // SQLite doesn't have built-in stored procedures like other databases.
+    // While SQLite does support user-defined functions, these are registered through
+    // the C/C++ API or language bindings and cannot be introspected through SQL.
+    // Triggers exist in SQLite but they're not the same as stored procedures.
+    //
+    // We return an empty array because:
+    // 1. SQLite has no native stored procedure concept
+    // 2. User-defined functions cannot be listed via SQL queries
+    // 3. We don't want to misrepresent triggers as stored procedures
+
+    return [];
+  }
+
+  async getStoredProcedureDetail(procedureName: string, schema?: string): Promise<StoredProcedure> {
+    if (!this.db) {
+      throw new Error("Not connected to SQLite database");
+    }
+    
+    // SQLite doesn't have true stored procedures:
+    // 1. SQLite doesn't support the CREATE PROCEDURE syntax
+    // 2. User-defined functions are created programmatically, not stored in the DB
+    // 3. Cannot introspect program-defined functions through SQL
+    
+    // Throw an error since SQLite doesn't support stored procedures
+    throw new Error("SQLite does not support stored procedures. Functions are defined programmatically through the SQLite API, not stored in the database.");
+  }
+
   async executeQuery(query: string): Promise<QueryResult> {
     if (!this.db) {
       throw new Error("Not connected to SQLite database");

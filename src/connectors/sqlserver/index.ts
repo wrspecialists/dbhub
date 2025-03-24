@@ -286,6 +286,123 @@ export class SQLServerConnector implements Connector {
     }
   }
 
+  async getStoredProcedures(schema?: string): Promise<string[]> {
+    if (!this.connection) {
+      throw new Error('Not connected to SQL Server database');
+    }
+
+    try {
+      // In SQL Server, use 'dbo' as the default schema if none specified
+      const schemaToUse = schema || 'dbo';
+      
+      const request = this.connection.request()
+        .input('schema', sql.VarChar, schemaToUse);
+      
+      const query = `
+        SELECT ROUTINE_NAME
+        FROM INFORMATION_SCHEMA.ROUTINES
+        WHERE ROUTINE_SCHEMA = @schema
+        AND (ROUTINE_TYPE = 'PROCEDURE' OR ROUTINE_TYPE = 'FUNCTION')
+        ORDER BY ROUTINE_NAME
+      `;
+
+      const result = await request.query(query);
+      return result.recordset.map(row => row.ROUTINE_NAME);
+    } catch (error) {
+      throw new Error(`Failed to get stored procedures: ${(error as Error).message}`);
+    }
+  }
+
+  async getStoredProcedureDetail(procedureName: string, schema?: string): Promise<StoredProcedure> {
+    if (!this.connection) {
+      throw new Error('Not connected to SQL Server database');
+    }
+
+    try {
+      // In SQL Server, use 'dbo' as the default schema if none specified
+      const schemaToUse = schema || 'dbo';
+      
+      const request = this.connection.request()
+        .input('procedureName', sql.VarChar, procedureName)
+        .input('schema', sql.VarChar, schemaToUse);
+      
+      // First, get basic procedure information
+      const routineQuery = `
+        SELECT 
+          ROUTINE_NAME as procedure_name,
+          ROUTINE_TYPE,
+          DATA_TYPE as return_data_type
+        FROM INFORMATION_SCHEMA.ROUTINES
+        WHERE ROUTINE_NAME = @procedureName
+        AND ROUTINE_SCHEMA = @schema
+      `;
+
+      const routineResult = await request.query(routineQuery);
+      
+      if (routineResult.recordset.length === 0) {
+        throw new Error(`Stored procedure '${procedureName}' not found in schema '${schemaToUse}'`);
+      }
+      
+      const routine = routineResult.recordset[0];
+      
+      // Next, get parameter information
+      const parameterQuery = `
+        SELECT 
+          PARAMETER_NAME,
+          PARAMETER_MODE,
+          DATA_TYPE,
+          CHARACTER_MAXIMUM_LENGTH,
+          ORDINAL_POSITION
+        FROM INFORMATION_SCHEMA.PARAMETERS
+        WHERE SPECIFIC_NAME = @procedureName
+        AND SPECIFIC_SCHEMA = @schema
+        ORDER BY ORDINAL_POSITION
+      `;
+      
+      const parameterResult = await request.query(parameterQuery);
+      
+      // Format the parameter list
+      let parameterList = '';
+      if (parameterResult.recordset.length > 0) {
+        parameterList = parameterResult.recordset
+          .map(param => {
+            const lengthStr = param.CHARACTER_MAXIMUM_LENGTH > 0 ? 
+              `(${param.CHARACTER_MAXIMUM_LENGTH})` : '';
+            return `${param.PARAMETER_NAME} ${param.PARAMETER_MODE} ${param.DATA_TYPE}${lengthStr}`;
+          })
+          .join(', ');
+      }
+      
+      // Get the procedure definition from sys.sql_modules
+      const definitionQuery = `
+        SELECT definition 
+        FROM sys.sql_modules sm
+        JOIN sys.objects o ON sm.object_id = o.object_id
+        JOIN sys.schemas s ON o.schema_id = s.schema_id
+        WHERE o.name = @procedureName
+        AND s.name = @schema
+      `;
+      
+      const definitionResult = await request.query(definitionQuery);
+      let definition = undefined;
+      
+      if (definitionResult.recordset.length > 0) {
+        definition = definitionResult.recordset[0].definition;
+      }
+      
+      return {
+        procedure_name: routine.procedure_name,
+        procedure_type: routine.ROUTINE_TYPE === 'PROCEDURE' ? 'procedure' : 'function',
+        language: 'sql', // SQL Server procedures are typically in T-SQL
+        parameter_list: parameterList,
+        return_type: routine.ROUTINE_TYPE === 'FUNCTION' ? routine.return_data_type : undefined,
+        definition: definition
+      };
+    } catch (error) {
+      throw new Error(`Failed to get stored procedure details: ${(error as Error).message}`);
+    }
+  }
+
   async executeQuery(query: string): Promise<QueryResult> {
     if (!this.connection) {
       throw new Error('Not connected to SQL Server database');

@@ -268,6 +268,157 @@ export class MySQLConnector implements Connector {
     }
   }
 
+  async getStoredProcedures(schema?: string): Promise<string[]> {
+    if (!this.pool) {
+      throw new Error('Not connected to database');
+    }
+    
+    try {
+      // In MySQL, if no schema is provided, use the current database context
+      const schemaClause = schema ? 
+        'WHERE routine_schema = ?' : 
+        'WHERE routine_schema = DATABASE()';
+
+      const queryParams = schema ? [schema] : [];
+      
+      // Get all stored procedures and functions
+      const [rows] = await this.pool.query(`
+        SELECT routine_name
+        FROM information_schema.routines
+        ${schemaClause}
+        ORDER BY routine_name
+      `, queryParams) as [any[], any];
+      
+      return rows.map(row => row.routine_name);
+    } catch (error) {
+      console.error("Error getting stored procedures:", error);
+      throw error;
+    }
+  }
+
+  async getStoredProcedureDetail(procedureName: string, schema?: string): Promise<StoredProcedure> {
+    if (!this.pool) {
+      throw new Error('Not connected to database');
+    }
+    
+    try {
+      // In MySQL, if no schema is provided, use the current database context
+      const schemaClause = schema ? 
+        'WHERE r.routine_schema = ?' : 
+        'WHERE r.routine_schema = DATABASE()';
+
+      const queryParams = schema ? [schema, procedureName] : [procedureName];
+      
+      // Get details of the stored procedure
+      const [rows] = await this.pool.query(`
+        SELECT 
+          r.routine_name AS procedure_name,
+          CASE 
+            WHEN r.routine_type = 'PROCEDURE' THEN 'procedure'
+            ELSE 'function'
+          END AS procedure_type,
+          LOWER(r.routine_type) AS routine_type,
+          r.routine_definition,
+          r.dtd_identifier AS return_type,
+          (
+            SELECT GROUP_CONCAT(
+              CONCAT(p.parameter_name, ' ', p.parameter_mode, ' ', p.data_type)
+              ORDER BY p.ordinal_position
+              SEPARATOR ', '
+            )
+            FROM information_schema.parameters p
+            WHERE p.specific_schema = r.routine_schema
+            AND p.specific_name = r.routine_name
+            AND p.parameter_name IS NOT NULL
+          ) AS parameter_list
+        FROM information_schema.routines r
+        ${schemaClause}
+        AND r.routine_name = ?
+      `, queryParams) as [any[], any];
+      
+      if (rows.length === 0) {
+        const schemaName = schema || 'current schema';
+        throw new Error(`Stored procedure '${procedureName}' not found in ${schemaName}`);
+      }
+      
+      const procedure = rows[0];
+
+      // If routine_definition is NULL, try to get the procedure body from mysql.proc
+      let definition = procedure.routine_definition;
+      
+      try {
+        const schemaValue = schema || await this.getCurrentSchema();
+        
+        // For full definition - different approaches based on type
+        if (procedure.procedure_type === 'procedure') {
+          // Try to get the definition from SHOW CREATE PROCEDURE
+          try {
+            const [defRows] = await this.pool.query(`
+              SHOW CREATE PROCEDURE ${schemaValue}.${procedureName}
+            `) as [any[], any];
+            
+            if (defRows && defRows.length > 0) {
+              definition = defRows[0]['Create Procedure'];
+            }
+          } catch (err) {
+            console.error(`Error getting procedure definition with SHOW CREATE: ${err}`);
+          }
+        } else {
+          // Try to get the definition for functions
+          try {
+            const [defRows] = await this.pool.query(`
+              SHOW CREATE FUNCTION ${schemaValue}.${procedureName}
+            `) as [any[], any];
+            
+            if (defRows && defRows.length > 0) {
+              definition = defRows[0]['Create Function'];
+            }
+          } catch (innerErr) {
+            console.error(`Error getting function definition with SHOW CREATE: ${innerErr}`);
+          }
+        }
+        
+        // Last attempt - try to get from information_schema.routines if not found yet
+        if (!definition) {
+          const [bodyRows] = await this.pool.query(`
+            SELECT routine_definition, routine_body 
+            FROM information_schema.routines
+            WHERE routine_schema = ? AND routine_name = ?
+          `, [schemaValue, procedureName]) as [any[], any];
+          
+          if (bodyRows && bodyRows.length > 0) {
+            if (bodyRows[0].routine_definition) {
+              definition = bodyRows[0].routine_definition;
+            } else if (bodyRows[0].routine_body) {
+              definition = bodyRows[0].routine_body;
+            }
+          }
+        }
+      } catch (error) {
+        // Ignore errors when getting definition - it's optional
+        console.error(`Error getting procedure/function details: ${error}`);
+      }
+      
+      return {
+        procedure_name: procedure.procedure_name,
+        procedure_type: procedure.procedure_type,
+        language: 'sql', // MySQL procedures are generally in SQL
+        parameter_list: procedure.parameter_list || '',
+        return_type: procedure.routine_type === 'function' ? procedure.return_type : undefined,
+        definition: definition || undefined
+      };
+    } catch (error) {
+      console.error("Error getting stored procedure detail:", error);
+      throw error;
+    }
+  }
+
+  // Helper method to get current schema (database) name
+  private async getCurrentSchema(): Promise<string> {
+    const [rows] = await this.pool!.query('SELECT DATABASE() as db') as [any[], any];
+    return rows[0].db;
+  }
+
   async executeQuery(query: string): Promise<QueryResult> {
     if (!this.pool) {
       throw new Error('Not connected to database');

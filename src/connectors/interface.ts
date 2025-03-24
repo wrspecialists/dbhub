@@ -21,6 +21,15 @@ export interface TableIndex {
   is_primary: boolean;
 }
 
+export interface StoredProcedure {
+  procedure_name: string;
+  procedure_type: 'procedure' | 'function';
+  language: string;
+  parameter_list: string;
+  return_type?: string;
+  definition?: string;
+}
+
 /**
  * Connection string (DSN) parser interface
  * Each connector needs to implement its own DSN parser
@@ -105,6 +114,21 @@ export interface Connector {
    * @returns Promise with array of index information
    */
   getTableIndexes(tableName: string, schema?: string): Promise<TableIndex[]>;
+  
+  /** 
+   * Get stored procedures/functions in the database or in a specific schema
+   * @param schema Optional schema name. If not provided, implementation should use the default schema
+   * @returns Promise with array of stored procedure/function names
+   */
+  getStoredProcedures(schema?: string): Promise<string[]>;
+  
+  /** 
+   * Get details for a specific stored procedure/function
+   * @param procedureName The name of the procedure/function to get details for
+   * @param schema Optional schema name. If not provided, implementation should use the default schema
+   * @returns Promise with stored procedure details
+   */
+  getStoredProcedureDetail(procedureName: string, schema?: string): Promise<StoredProcedure>;
   
   /** Execute a query */
   executeQuery(query: string): Promise<QueryResult>;
