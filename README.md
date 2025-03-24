@@ -36,12 +36,14 @@ https://demo.dbhub.ai/sse connects a [sample employee database](https://github.c
 
 ### Database Resources
 
-| Resource Name             | URI Format                                             | PostgreSQL | MySQL | SQL Server | SQLite |
-| ------------------------- | ------------------------------------------------------ | :--------: | :---: | :--------: | :----: |
-| schemas                   | `db://schemas`                                         |     ✅     |  ✅   |     ✅     |   ✅   |
-| tables_in_schema          | `db://schemas/{schemaName}/tables`                     |     ✅     |  ✅   |     ✅     |   ✅   |
-| table_structure_in_schema | `db://schemas/{schemaName}/tables/{tableName}`         |     ✅     |  ✅   |     ✅     |   ✅   |
-| indexes_in_table          | `db://schemas/{schemaName}/tables/{tableName}/indexes` |     ✅     |  ✅   |     ✅     |   ✅   |
+| Resource Name                 | URI Format                                                  | PostgreSQL | MySQL | SQL Server | SQLite |
+| ----------------------------- | ----------------------------------------------------------- | :--------: | :---: | :--------: | :----: |
+| schemas                       | `db://schemas`                                              |     ✅     |  ✅   |     ✅     |   ✅   |
+| tables_in_schema              | `db://schemas/{schemaName}/tables`                          |     ✅     |  ✅   |     ✅     |   ✅   |
+| table_structure_in_schema     | `db://schemas/{schemaName}/tables/{tableName}`              |     ✅     |  ✅   |     ✅     |   ✅   |
+| indexes_in_table              | `db://schemas/{schemaName}/tables/{tableName}/indexes`      |     ✅     |  ✅   |     ✅     |   ✅   |
+| procedures_in_schema          | `db://schemas/{schemaName}/procedures`                      |     ✅     |  ✅   |     ✅     |   ❌   |
+| procedure_details_in_schema   | `db://schemas/{schemaName}/procedures/{procedureName}`      |     ✅     |  ✅   |     ✅     |   ❌   |
 
 ### Database Tools
 
