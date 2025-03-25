@@ -100,6 +100,8 @@ export function formatPromptSuccessResponse(text: string, references: string[] =
     };
   }>;
   references?: string[];
+  _meta?: Record<string, unknown>;
+  [key: string]: unknown;
 } {
   return {
     messages: [
@@ -128,6 +130,8 @@ export function formatPromptErrorResponse(error: string, code: string = 'ERROR')
   }>;
   error: string;
   code: string;
+  _meta?: Record<string, unknown>;
+  [key: string]: unknown;
 } {
   return {
     messages: [

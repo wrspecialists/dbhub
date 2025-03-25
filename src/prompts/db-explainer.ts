@@ -15,7 +15,20 @@ export const dbExplainerSchema = {
 export async function dbExplainerPromptHandler({ schema, table }: { 
   schema?: string, 
   table?: string 
-}, _extra: any) {
+}, _extra: any): Promise<{
+  messages: {
+    role: 'assistant' | 'user';
+    content: {
+      type: 'text';
+      text: string;
+    };
+  }[];
+  references?: string[];
+  error?: string;
+  code?: string;
+  _meta?: Record<string, unknown>;
+  [key: string]: unknown;
+}> {
   try {
     const connector = ConnectorManager.getCurrentConnector();
     
@@ -165,6 +178,12 @@ This database ${describeDatabasePurpose(tables)}`;
       "EXPLANATION_ERROR"
     );
   }
+  
+  // If no condition was met and no other return was triggered
+  return formatPromptErrorResponse(
+    `Unable to process request for schema: ${schema}, table: ${table}`,
+    "UNHANDLED_REQUEST"
+  );
 }
 
 /**
