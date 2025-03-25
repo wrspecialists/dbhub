@@ -1,13 +1,13 @@
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { tablesResourceHandler } from './tables.js';
-import { schemaResourceHandler } from './schema.js';
+import { tableStructureResourceHandler } from './schema.js';
 import { schemasResourceHandler } from './schemas.js';
 import { indexesResourceHandler } from './indexes.js';
 import { proceduresResourceHandler, procedureDetailResourceHandler } from './procedures.js';
 
 // Export all resource handlers
 export { tablesResourceHandler } from './tables.js';
-export { schemaResourceHandler } from './schema.js';
+export { tableStructureResourceHandler } from './schema.js';
 export { schemasResourceHandler } from './schemas.js';
 export { indexesResourceHandler } from './indexes.js';
 export { proceduresResourceHandler, procedureDetailResourceHandler } from './procedures.js';
@@ -34,7 +34,7 @@ export function registerResources(server: McpServer): void {
   server.resource(
     "table_structure_in_schema",
     new ResourceTemplate("db://schemas/{schemaName}/tables/{tableName}", { list: undefined }),
-    schemaResourceHandler
+    tableStructureResourceHandler
   );
   
   // Resource for getting indexes for a table within a specific database schema

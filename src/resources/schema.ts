@@ -6,7 +6,7 @@ import { createResourceSuccessResponse, createResourceErrorResponse } from '../u
  * Schema resource handler
  * Returns schema information for a specific table, optionally within a specific database schema
  */
-export async function schemaResourceHandler(uri: URL, variables: Variables, _extra: any) {
+export async function tableStructureResourceHandler(uri: URL, variables: Variables, _extra: any) {
   const connector = ConnectorManager.getCurrentConnector();
   
   // Handle tableName which could be a string or string array from URL template
