@@ -9,7 +9,6 @@ import { isDemoMode } from '../config/env.js';
  * Indicates which connector is active based on current DSN
  */
 export async function listConnectorsToolHandler(_args: {}, _extra: any) {
-  const connectors = ConnectorManager.getAvailableConnectors();
   const samples = ConnectorRegistry.getAllSampleDSNs();
   
   // Get active connector if possible
