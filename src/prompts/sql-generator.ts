@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ConnectorManager } from '../connectors/manager.js';
 import { formatPromptSuccessResponse, formatPromptErrorResponse } from '../utils/response-formatter.js';
+import { SQLDialect } from '../types/sql.js';
 
 // Schema for SQL generator prompt
 export const sqlGeneratorSchema = {
@@ -21,7 +22,7 @@ export async function sqlGeneratorPromptHandler({ description, schema }: {
     const connector = ConnectorManager.getCurrentConnector();
     
     // Determine SQL dialect from connector automatically
-    let sqlDialect: string;
+    let sqlDialect: SQLDialect;
     switch (connector.id) {
       case 'postgres':
         sqlDialect = 'postgres';
@@ -100,7 +101,7 @@ export async function sqlGeneratorPromptHandler({ description, schema }: {
         : 'No schema information available.';
       
       // Example queries for the given dialect to use as reference
-      const dialectExamples = {
+      const dialectExamples: Record<SQLDialect, string[]> = {
       postgres: [
         "SELECT * FROM users WHERE created_at > NOW() - INTERVAL '1 day'",
         "SELECT u.name, COUNT(o.id) FROM users u JOIN orders o ON u.id = o.user_id GROUP BY u.name HAVING COUNT(o.id) > 5",
