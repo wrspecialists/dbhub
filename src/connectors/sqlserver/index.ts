@@ -1,5 +1,5 @@
 import sql from 'mssql';
-import { Connector, ConnectorRegistry, DSNParser, QueryResult, TableColumn } from '../interface.js';
+import { Connector, ConnectorRegistry, DSNParser, QueryResult, TableColumn, TableIndex, StoredProcedure } from '../interface.js';
 
 /**
  * SQL Server DSN parser

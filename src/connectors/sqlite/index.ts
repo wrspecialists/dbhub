@@ -7,7 +7,7 @@
  * 2. Or set DB_CONNECTOR_TYPE=sqlite for default in-memory database
  */
 
-import { Connector, ConnectorRegistry, DSNParser, QueryResult, TableColumn } from '../interface.js';
+import { Connector, ConnectorRegistry, DSNParser, QueryResult, TableColumn, TableIndex, StoredProcedure } from '../interface.js';
 import Database from 'better-sqlite3';
 
 /**
