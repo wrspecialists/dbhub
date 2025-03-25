@@ -90,12 +90,12 @@ export class MySQLConnector implements Connector {
     try {
       // In MySQL, schemas are equivalent to databases
       const [rows] = await this.pool.query(`
-        SELECT schema_name 
-        FROM information_schema.schemata
-        ORDER BY schema_name
+        SELECT SCHEMA_NAME 
+        FROM INFORMATION_SCHEMA.SCHEMATA
+        ORDER BY SCHEMA_NAME
       `) as [any[], any];
       
-      return rows.map(row => row.schema_name);
+      return rows.map(row => row.SCHEMA_NAME);
     } catch (error) {
       console.error("Error getting schemas:", error);
       throw error;
@@ -112,20 +112,20 @@ export class MySQLConnector implements Connector {
       // MySQL uses the terms 'database' and 'schema' interchangeably
       // The DATABASE() function returns the current database context
       const schemaClause = schema ? 
-        'WHERE table_schema = ?' : 
-        'WHERE table_schema = DATABASE()';
+        'WHERE TABLE_SCHEMA = ?' : 
+        'WHERE TABLE_SCHEMA = DATABASE()';
 
       const queryParams = schema ? [schema] : [];
       
       // Get all tables from the specified schema or current database
       const [rows] = await this.pool.query(`
-        SELECT table_name 
-        FROM information_schema.tables 
+        SELECT TABLE_NAME 
+        FROM INFORMATION_SCHEMA.TABLES 
         ${schemaClause}
-        ORDER BY table_name
+        ORDER BY TABLE_NAME
       `, queryParams) as [any[], any];
       
-      return rows.map(row => row.table_name);
+      return rows.map(row => row.TABLE_NAME);
     } catch (error) {
       console.error("Error getting tables:", error);
       throw error;
@@ -141,19 +141,19 @@ export class MySQLConnector implements Connector {
       // In MySQL, if no schema is provided, use the current active database
       // DATABASE() function returns the name of the current database
       const schemaClause = schema ? 
-        'WHERE table_schema = ?' : 
-        'WHERE table_schema = DATABASE()';
+        'WHERE TABLE_SCHEMA = ?' : 
+        'WHERE TABLE_SCHEMA = DATABASE()';
 
       const queryParams = schema ? [schema, tableName] : [tableName];
 
       const [rows] = await this.pool.query(`
-        SELECT COUNT(*) as count
-        FROM information_schema.tables 
+        SELECT COUNT(*) AS COUNT
+        FROM INFORMATION_SCHEMA.TABLES 
         ${schemaClause} 
-        AND table_name = ?
+        AND TABLE_NAME = ?
       `, queryParams) as [any[], any];
       
-      return rows[0].count > 0;
+      return rows[0].COUNT > 0;
     } catch (error) {
       console.error("Error checking if table exists:", error);
       throw error;
@@ -181,7 +181,7 @@ export class MySQLConnector implements Connector {
           NON_UNIQUE,
           SEQ_IN_INDEX
         FROM 
-          information_schema.STATISTICS 
+          INFORMATION_SCHEMA.STATISTICS 
         WHERE 
           ${schemaClause}
           AND TABLE_NAME = ? 
@@ -243,22 +243,22 @@ export class MySQLConnector implements Connector {
       // If no schema is provided, use the current database context via DATABASE() function
       // This means tables will be retrieved from whatever database the connection is currently using
       const schemaClause = schema ? 
-        'WHERE table_schema = ?' : 
-        'WHERE table_schema = DATABASE()';
+        'WHERE TABLE_SCHEMA = ?' : 
+        'WHERE TABLE_SCHEMA = DATABASE()';
 
       const queryParams = schema ? [schema, tableName] : [tableName];
 
       // Get table columns
       const [rows] = await this.pool.query(`
         SELECT 
-          column_name, 
-          data_type, 
-          is_nullable,
-          column_default
-        FROM information_schema.columns
+          COLUMN_NAME as column_name, 
+          DATA_TYPE as data_type, 
+          IS_NULLABLE as is_nullable,
+          COLUMN_DEFAULT as column_default
+        FROM INFORMATION_SCHEMA.COLUMNS
         ${schemaClause}
-        AND table_name = ?
-        ORDER BY ordinal_position
+        AND TABLE_NAME = ?
+        ORDER BY ORDINAL_POSITION
       `, queryParams) as [any[], any];
       
       return rows;
@@ -276,20 +276,20 @@ export class MySQLConnector implements Connector {
     try {
       // In MySQL, if no schema is provided, use the current database context
       const schemaClause = schema ? 
-        'WHERE routine_schema = ?' : 
-        'WHERE routine_schema = DATABASE()';
+        'WHERE ROUTINE_SCHEMA = ?' : 
+        'WHERE ROUTINE_SCHEMA = DATABASE()';
 
       const queryParams = schema ? [schema] : [];
       
       // Get all stored procedures and functions
       const [rows] = await this.pool.query(`
-        SELECT routine_name
-        FROM information_schema.routines
+        SELECT ROUTINE_NAME
+        FROM INFORMATION_SCHEMA.ROUTINES
         ${schemaClause}
-        ORDER BY routine_name
+        ORDER BY ROUTINE_NAME
       `, queryParams) as [any[], any];
       
-      return rows.map(row => row.routine_name);
+      return rows.map(row => row.ROUTINE_NAME);
     } catch (error) {
       console.error("Error getting stored procedures:", error);
       throw error;
@@ -304,36 +304,36 @@ export class MySQLConnector implements Connector {
     try {
       // In MySQL, if no schema is provided, use the current database context
       const schemaClause = schema ? 
-        'WHERE r.routine_schema = ?' : 
-        'WHERE r.routine_schema = DATABASE()';
+        'WHERE r.ROUTINE_SCHEMA = ?' : 
+        'WHERE r.ROUTINE_SCHEMA = DATABASE()';
 
       const queryParams = schema ? [schema, procedureName] : [procedureName];
       
       // Get details of the stored procedure
       const [rows] = await this.pool.query(`
         SELECT 
-          r.routine_name AS procedure_name,
+          r.ROUTINE_NAME AS procedure_name,
           CASE 
-            WHEN r.routine_type = 'PROCEDURE' THEN 'procedure'
+            WHEN r.ROUTINE_TYPE = 'PROCEDURE' THEN 'procedure'
             ELSE 'function'
           END AS procedure_type,
-          LOWER(r.routine_type) AS routine_type,
-          r.routine_definition,
-          r.dtd_identifier AS return_type,
+          LOWER(r.ROUTINE_TYPE) AS routine_type,
+          r.ROUTINE_DEFINITION,
+          r.DTD_IDENTIFIER AS return_type,
           (
             SELECT GROUP_CONCAT(
-              CONCAT(p.parameter_name, ' ', p.parameter_mode, ' ', p.data_type)
-              ORDER BY p.ordinal_position
+              CONCAT(p.PARAMETER_NAME, ' ', p.PARAMETER_MODE, ' ', p.DATA_TYPE)
+              ORDER BY p.ORDINAL_POSITION
               SEPARATOR ', '
             )
-            FROM information_schema.parameters p
-            WHERE p.specific_schema = r.routine_schema
-            AND p.specific_name = r.routine_name
-            AND p.parameter_name IS NOT NULL
+            FROM INFORMATION_SCHEMA.PARAMETERS p
+            WHERE p.SPECIFIC_SCHEMA = r.ROUTINE_SCHEMA
+            AND p.SPECIFIC_NAME = r.ROUTINE_NAME
+            AND p.PARAMETER_NAME IS NOT NULL
           ) AS parameter_list
-        FROM information_schema.routines r
+        FROM INFORMATION_SCHEMA.ROUTINES r
         ${schemaClause}
-        AND r.routine_name = ?
+        AND r.ROUTINE_NAME = ?
       `, queryParams) as [any[], any];
       
       if (rows.length === 0) {
@@ -343,8 +343,8 @@ export class MySQLConnector implements Connector {
       
       const procedure = rows[0];
 
-      // If routine_definition is NULL, try to get the procedure body from mysql.proc
-      let definition = procedure.routine_definition;
+      // If ROUTINE_DEFINITION is NULL, try to get the procedure body from mysql.proc
+      let definition = procedure.ROUTINE_DEFINITION;
       
       try {
         const schemaValue = schema || await this.getCurrentSchema();
@@ -381,16 +381,16 @@ export class MySQLConnector implements Connector {
         // Last attempt - try to get from information_schema.routines if not found yet
         if (!definition) {
           const [bodyRows] = await this.pool.query(`
-            SELECT routine_definition, routine_body 
-            FROM information_schema.routines
-            WHERE routine_schema = ? AND routine_name = ?
+            SELECT ROUTINE_DEFINITION, ROUTINE_BODY 
+            FROM INFORMATION_SCHEMA.ROUTINES
+            WHERE ROUTINE_SCHEMA = ? AND ROUTINE_NAME = ?
           `, [schemaValue, procedureName]) as [any[], any];
           
           if (bodyRows && bodyRows.length > 0) {
-            if (bodyRows[0].routine_definition) {
-              definition = bodyRows[0].routine_definition;
-            } else if (bodyRows[0].routine_body) {
-              definition = bodyRows[0].routine_body;
+            if (bodyRows[0].ROUTINE_DEFINITION) {
+              definition = bodyRows[0].ROUTINE_DEFINITION;
+            } else if (bodyRows[0].ROUTINE_BODY) {
+              definition = bodyRows[0].ROUTINE_BODY;
             }
           }
         }
@@ -415,8 +415,8 @@ export class MySQLConnector implements Connector {
 
   // Helper method to get current schema (database) name
   private async getCurrentSchema(): Promise<string> {
-    const [rows] = await this.pool!.query('SELECT DATABASE() as db') as [any[], any];
-    return rows[0].db;
+    const [rows] = await this.pool!.query('SELECT DATABASE() AS DB') as [any[], any];
+    return rows[0].DB;
   }
 
   async executeQuery(query: string): Promise<QueryResult> {
