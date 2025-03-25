@@ -36,14 +36,14 @@ https://demo.dbhub.ai/sse connects a [sample employee database](https://github.c
 
 ### Database Resources
 
-| Resource Name                 | URI Format                                                  | PostgreSQL | MySQL | SQL Server | SQLite |
-| ----------------------------- | ----------------------------------------------------------- | :--------: | :---: | :--------: | :----: |
-| schemas                       | `db://schemas`                                              |     ✅     |  ✅   |     ✅     |   ✅   |
-| tables_in_schema              | `db://schemas/{schemaName}/tables`                          |     ✅     |  ✅   |     ✅     |   ✅   |
-| table_structure_in_schema     | `db://schemas/{schemaName}/tables/{tableName}`              |     ✅     |  ✅   |     ✅     |   ✅   |
-| indexes_in_table              | `db://schemas/{schemaName}/tables/{tableName}/indexes`      |     ✅     |  ✅   |     ✅     |   ✅   |
-| procedures_in_schema          | `db://schemas/{schemaName}/procedures`                      |     ✅     |  ✅   |     ✅     |   ❌   |
-| procedure_details_in_schema   | `db://schemas/{schemaName}/procedures/{procedureName}`      |     ✅     |  ✅   |     ✅     |   ❌   |
+| Resource Name               | URI Format                                             | PostgreSQL | MySQL | SQL Server | SQLite |
+| --------------------------- | ------------------------------------------------------ | :--------: | :---: | :--------: | :----: |
+| schemas                     | `db://schemas`                                         |     ✅     |  ✅   |     ✅     |   ✅   |
+| tables_in_schema            | `db://schemas/{schemaName}/tables`                     |     ✅     |  ✅   |     ✅     |   ✅   |
+| table_structure_in_schema   | `db://schemas/{schemaName}/tables/{tableName}`         |     ✅     |  ✅   |     ✅     |   ✅   |
+| indexes_in_table            | `db://schemas/{schemaName}/tables/{tableName}/indexes` |     ✅     |  ✅   |     ✅     |   ✅   |
+| procedures_in_schema        | `db://schemas/{schemaName}/procedures`                 |     ✅     |  ✅   |     ✅     |   ❌   |
+| procedure_details_in_schema | `db://schemas/{schemaName}/procedures/{procedureName}` |     ✅     |  ✅   |     ✅     |   ❌   |
 
 ### Database Tools
 
@@ -54,10 +54,10 @@ https://demo.dbhub.ai/sse connects a [sample employee database](https://github.c
 
 ### Prompt Capabilities
 
-| Prompt              | Command Name    | PostgreSQL | MySQL | SQL Server | SQLite |
-| ------------------- | --------------- | :--------: | :---: | :--------: | :----: |
-| Generate SQL        | `generate_sql`  |     ✅     |  ✅   |     ✅     |   ✅   |
-| Explain DB Elements | `explain_db`    |     ✅     |  ✅   |     ✅     |   ✅   |
+| Prompt              | Command Name   | PostgreSQL | MySQL | SQL Server | SQLite |
+| ------------------- | -------------- | :--------: | :---: | :--------: | :----: |
+| Generate SQL        | `generate_sql` |     ✅     |  ✅   |     ✅     |   ✅   |
+| Explain DB Elements | `explain_db`   |     ✅     |  ✅   |     ✅     |   ✅   |
 
 ## Installation
 
@@ -181,14 +181,17 @@ For real databases, a Database Source Name (DSN) is required. You can provide th
   DSN=postgres://user:password@localhost:5432/dbname?sslmode=disable
   ```
 
+> [!WARNING]
+> When running in Docker, use `host.docker.internal` instead of `localhost` to connect to databases running on your host machine. For example: `mysql://user:password@host.docker.internal:3306/dbname`
+
 DBHub supports the following database connection string formats:
 
-| Database   | DSN Format                                               | Example                                                           |
-| ---------- | -------------------------------------------------------- | ----------------------------------------------------------------- |
-| PostgreSQL | `postgres://[user]:[password]@[host]:[port]/[database]`  | `postgres://user:password@localhost:5432/dbname?sslmode=disable`  |
-| SQLite     | `sqlite:///[path/to/file]` or `sqlite::memory:`          | `sqlite:///path/to/database.db` or `sqlite::memory:`              |
-| SQL Server | `sqlserver://[user]:[password]@[host]:[port]/[database]` | `sqlserver://user:password@localhost:1433/dbname`                 |
-| MySQL      | `mysql://[user]:[password]@[host]:[port]/[database]`     | `mysql://user:password@localhost:3306/dbname`                     |
+| Database   | DSN Format                                               | Example                                                          |
+| ---------- | -------------------------------------------------------- | ---------------------------------------------------------------- |
+| PostgreSQL | `postgres://[user]:[password]@[host]:[port]/[database]`  | `postgres://user:password@localhost:5432/dbname?sslmode=disable` |
+| SQLite     | `sqlite:///[path/to/file]` or `sqlite::memory:`          | `sqlite:///path/to/database.db` or `sqlite::memory:`             |
+| SQL Server | `sqlserver://[user]:[password]@[host]:[port]/[database]` | `sqlserver://user:password@localhost:1433/dbname`                |
+| MySQL      | `mysql://[user]:[password]@[host]:[port]/[database]`     | `mysql://user:password@localhost:3306/dbname`                    |
 
 ### Transport
 
