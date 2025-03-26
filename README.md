@@ -257,3 +257,7 @@ npx @modelcontextprotocol/inspector
 ```
 
 Connect to the DBHub server `/sse` endpoint
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=bytebase/dbhub&type=Date)](https://www.star-history.com/#bytebase/dbhub&Date)
