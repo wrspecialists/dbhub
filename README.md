@@ -1,7 +1,7 @@
 <p align="center">
 <a href="https://dbhub.ai/" target="_blank">
 <picture>
-  <img src="https://raw.githubusercontent.com/bytebase/dbhub/main/resources/images/logo-full.svg" width="50%">
+  <img src="https://raw.githubusercontent.com/bytebase/dbhub/main/resources/images/logo-full.webp" width="50%">
 </picture>
 </a>
 </p>
