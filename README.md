@@ -156,7 +156,7 @@ npx @bytebase/dbhub --transport sse --port 8080 --demo
 You can use DBHub in demo mode with a sample employee database for testing:
 
 ```bash
-pnpm dev --demo
+npx @bytebase/dbhub  --demo
 ```
 
 For real databases, a Database Source Name (DSN) is required. You can provide this in several ways:
@@ -164,14 +164,14 @@ For real databases, a Database Source Name (DSN) is required. You can provide th
 - **Command line argument** (highest priority):
 
   ```bash
-  pnpm dev --dsn "postgres://user:password@localhost:5432/dbname?sslmode=disable"
+  npx @bytebase/dbhub  --dsn "postgres://user:password@localhost:5432/dbname?sslmode=disable"
   ```
 
 - **Environment variable** (second priority):
 
   ```bash
   export DSN="postgres://user:password@localhost:5432/dbname?sslmode=disable"
-  pnpm dev
+  npx @bytebase/dbhub
   ```
 
 - **Environment file** (third priority):
