@@ -167,3 +167,27 @@ export function resolvePort(): { port: number; source: string } {
   // 3. Default to 8080
   return { port: 8080, source: 'default' };
 }
+
+/**
+ * Redact sensitive information from a DSN string
+ * Replaces the password with asterisks
+ * @param dsn - The DSN string to redact
+ * @returns The sanitized DSN string
+ */
+export function redactDSN(dsn: string): string {
+  try {
+    // Create a URL object to parse the DSN
+    const url = new URL(dsn);
+    
+    // Replace the password with asterisks
+    if (url.password) {
+      url.password = '*******';
+    }
+    
+    // Return the sanitized DSN
+    return url.toString();
+  } catch (error) {
+    // If parsing fails, do basic redaction with regex
+    return dsn.replace(/\/\/([^:]+):([^@]+)@/, '//$1:***@');
+  }
+}

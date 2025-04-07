@@ -49,15 +49,15 @@ https://demo.dbhub.ai/sse connects a [sample employee database](https://github.c
 
 | Tool            | Command Name      | PostgreSQL | MySQL | SQL Server | SQLite |
 | --------------- | ----------------- | :--------: | :---: | :--------: | :----: |
-| Execute Query   | `run_query`       |     ✅     |  ✅   |     ✅     |   ✅   |
-| List Connectors | `list_connectors` |     ✅     |  ✅   |     ✅     |   ✅   |
+| Execute Query   | `run_query`       |     ✅     |  ✅   |     ✅     |   ✅   |   ✅   |
+| List Connectors | `list_connectors` |     ✅     |  ✅   |     ✅     |   ✅   |   ✅   |
 
 ### Prompt Capabilities
 
 | Prompt              | Command Name   | PostgreSQL | MySQL | SQL Server | SQLite |
 | ------------------- | -------------- | :--------: | :---: | :--------: | :----: |
-| Generate SQL        | `generate_sql` |     ✅     |  ✅   |     ✅     |   ✅   |
-| Explain DB Elements | `explain_db`   |     ✅     |  ✅   |     ✅     |   ✅   |
+| Generate SQL        | `generate_sql` |     ✅     |  ✅   |     ✅     |   ✅   |   ✅   |
+| Explain DB Elements | `explain_db`   |     ✅     |  ✅   |     ✅     |   ✅   |   ✅   |
 
 ## Installation
 
@@ -192,6 +192,7 @@ DBHub supports the following database connection string formats:
 | SQLite     | `sqlite:///[path/to/file]` or `sqlite::memory:`          | `sqlite:///path/to/database.db` or `sqlite::memory:`             |
 | SQL Server | `sqlserver://[user]:[password]@[host]:[port]/[database]` | `sqlserver://user:password@localhost:1433/dbname`                |
 | MySQL      | `mysql://[user]:[password]@[host]:[port]/[database]`     | `mysql://user:password@localhost:3306/dbname`                    |
+| MariaDB    | `mariadb://[user]:[password]@[host]:[port]/[database]`   | `mariadb://user:password@localhost:3306/dbname`                  |
 
 ### Transport
 

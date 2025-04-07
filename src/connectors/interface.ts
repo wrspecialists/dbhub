@@ -39,6 +39,7 @@ export interface DSNParser {
    * Parse a connection string into connector-specific configuration
    * Example DSN formats:
    * - PostgreSQL: "postgres://user:password@localhost:5432/dbname?sslmode=disable"
+   * - MariaDB: "mariadb://user:password@localhost:3306/dbname"
    * - MySQL: "mysql://user:password@localhost:3306/dbname"
    * - SQLite: "sqlite:///path/to/database.db" or "sqlite::memory:"
    */
