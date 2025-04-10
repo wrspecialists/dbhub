@@ -1,5 +1,6 @@
 import sql from 'mssql';
 import { Connector, ConnectorRegistry, DSNParser, QueryResult, TableColumn, TableIndex, StoredProcedure } from '../interface.js';
+import {DefaultAzureCredential} from "@azure/identity";
 
 /**
  * SQL Server DSN parser
@@ -20,6 +21,8 @@ export class SQLServerDSNParser implements DSNParser {
     const user = url.username;
     const password = url.password;
 
+    let authenticationType: string | undefined;
+
     // Parse additional options from query parameters
     const options: Record<string, any> = {};
     for (const [key, value] of url.searchParams.entries()) {
@@ -31,11 +34,13 @@ export class SQLServerDSNParser implements DSNParser {
         options.connectTimeout = parseInt(value, 10);
       } else if (key === 'requestTimeout') {
         options.requestTimeout = parseInt(value, 10);
+      } else if (key === 'authentication') {
+        options.authentication = value;
       }
     }
 
-    // Construct and return the config
-    return {
+    // Base configuration without authentication first
+    const config: sql.config = {
       user,
       password,
       server: host,
@@ -48,6 +53,23 @@ export class SQLServerDSNParser implements DSNParser {
         requestTimeout: options.requestTimeout ?? 15000,
       },
     };
+
+
+    const credential = new DefaultAzureCredential();
+    const accessToken = credential.getToken('https://database.windows.net/.default');
+
+
+    if (authenticationType) {
+      const credential = new DefaultAzureCredential();
+      config.authentication = {
+        type: authenticationType,
+        options: {
+          token: credential.getToken('https://database.windows.net/.default'),
+        },
+      };
+    }
+
+    return config;
   }
 
   getSampleDSN(): string {
@@ -78,11 +100,11 @@ export class SQLServerConnector implements Connector {
   async connect(dsn: string): Promise<void> {
     try {
       this.config = this.dsnParser.parse(dsn);
-      
+
       if (!this.config.options) {
         this.config.options = {};
       }
-      
+
       this.connection = await new sql.ConnectionPool(this.config).connect();
     } catch (error) {
       throw error;
@@ -103,9 +125,9 @@ export class SQLServerConnector implements Connector {
 
     try {
       const result = await this.connection.request().query(`
-        SELECT SCHEMA_NAME 
-        FROM INFORMATION_SCHEMA.SCHEMATA 
-        ORDER BY SCHEMA_NAME
+          SELECT SCHEMA_NAME
+          FROM INFORMATION_SCHEMA.SCHEMATA
+          ORDER BY SCHEMA_NAME
       `);
 
       return result.recordset.map((row) => row.SCHEMA_NAME);
@@ -123,17 +145,17 @@ export class SQLServerConnector implements Connector {
       // In SQL Server, use 'dbo' as the default schema if none specified
       // This is the default schema for SQL Server databases
       const schemaToUse = schema || 'dbo';
-      
+
       const request = this.connection.request()
         .input('schema', sql.VarChar, schemaToUse);
-      
+
       const query = `
-        SELECT TABLE_NAME 
-        FROM INFORMATION_SCHEMA.TABLES 
-        WHERE TABLE_SCHEMA = @schema
-        ORDER BY TABLE_NAME
+          SELECT TABLE_NAME
+          FROM INFORMATION_SCHEMA.TABLES
+          WHERE TABLE_SCHEMA = @schema
+          ORDER BY TABLE_NAME
       `;
-      
+
       const result = await request.query(query);
 
       return result.recordset.map((row) => row.TABLE_NAME);
@@ -150,18 +172,18 @@ export class SQLServerConnector implements Connector {
     try {
       // In SQL Server, use 'dbo' as the default schema if none specified
       const schemaToUse = schema || 'dbo';
-      
+
       const request = this.connection.request()
         .input('tableName', sql.VarChar, tableName)
         .input('schema', sql.VarChar, schemaToUse);
-      
+
       const query = `
-        SELECT COUNT(*) as count
-        FROM INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_NAME = @tableName
-        AND TABLE_SCHEMA = @schema
+          SELECT COUNT(*) as count
+          FROM INFORMATION_SCHEMA.TABLES
+          WHERE TABLE_NAME = @tableName
+            AND TABLE_SCHEMA = @schema
       `;
-      
+
       const result = await request.query(query);
 
       return result.recordset[0].count > 0;
@@ -178,52 +200,48 @@ export class SQLServerConnector implements Connector {
     try {
       // In SQL Server, use 'dbo' as the default schema if none specified
       const schemaToUse = schema || 'dbo';
-      
+
       const request = this.connection.request()
         .input('tableName', sql.VarChar, tableName)
         .input('schema', sql.VarChar, schemaToUse);
-      
+
       // This gets all indexes including primary keys
       const query = `
-        SELECT 
-          i.name AS index_name,
-          i.is_unique,
-          i.is_primary_key,
-          c.name AS column_name,
-          ic.key_ordinal
-        FROM 
-          sys.indexes i
-        INNER JOIN 
-          sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
-        INNER JOIN 
-          sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
-        INNER JOIN 
-          sys.tables t ON i.object_id = t.object_id
-        INNER JOIN 
-          sys.schemas s ON t.schema_id = s.schema_id
-        WHERE 
-          t.name = @tableName
-          AND s.name = @schema
-        ORDER BY 
-          i.name, 
-          ic.key_ordinal
+          SELECT i.name AS index_name,
+                 i.is_unique,
+                 i.is_primary_key,
+                 c.name AS column_name,
+                 ic.key_ordinal
+          FROM sys.indexes i
+                   INNER JOIN
+               sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+                   INNER JOIN
+               sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+                   INNER JOIN
+               sys.tables t ON i.object_id = t.object_id
+                   INNER JOIN
+               sys.schemas s ON t.schema_id = s.schema_id
+          WHERE t.name = @tableName
+            AND s.name = @schema
+          ORDER BY i.name,
+                   ic.key_ordinal
       `;
-      
+
       const result = await request.query(query);
-      
+
       // Group by index name to collect all columns for each index
       const indexMap = new Map<string, {
         columns: string[],
         is_unique: boolean,
         is_primary: boolean
       }>();
-      
+
       for (const row of result.recordset) {
         const indexName = row.index_name;
         const columnName = row.column_name;
         const isUnique = !!row.is_unique;
         const isPrimary = !!row.is_primary_key;
-        
+
         if (!indexMap.has(indexName)) {
           indexMap.set(indexName, {
             columns: [],
@@ -231,11 +249,11 @@ export class SQLServerConnector implements Connector {
             is_primary: isPrimary
           });
         }
-        
+
         const indexInfo = indexMap.get(indexName)!;
         indexInfo.columns.push(columnName);
       }
-      
+
       // Convert Map to array of TableIndex objects
       const indexes: TableIndex[] = [];
       indexMap.forEach((info, name) => {
@@ -246,7 +264,7 @@ export class SQLServerConnector implements Connector {
           is_primary: info.is_primary
         });
       });
-      
+
       return indexes;
     } catch (error) {
       throw new Error(`Failed to get indexes for table ${tableName}: ${(error as Error).message}`);
@@ -261,21 +279,20 @@ export class SQLServerConnector implements Connector {
     try {
       // In SQL Server, use 'dbo' as the default schema if none specified
       const schemaToUse = schema || 'dbo';
-      
+
       const request = this.connection.request()
         .input('tableName', sql.VarChar, tableName)
         .input('schema', sql.VarChar, schemaToUse);
-      
+
       const query = `
-        SELECT 
-          COLUMN_NAME as column_name,
-          DATA_TYPE as data_type,
-          IS_NULLABLE as is_nullable,
-          COLUMN_DEFAULT as column_default
-        FROM INFORMATION_SCHEMA.COLUMNS
-        WHERE TABLE_NAME = @tableName
-        AND TABLE_SCHEMA = @schema
-        ORDER BY ORDINAL_POSITION
+          SELECT COLUMN_NAME as    column_name,
+                 DATA_TYPE as      data_type,
+                 IS_NULLABLE as    is_nullable,
+                 COLUMN_DEFAULT as column_default
+          FROM INFORMATION_SCHEMA.COLUMNS
+          WHERE TABLE_NAME = @tableName
+            AND TABLE_SCHEMA = @schema
+          ORDER BY ORDINAL_POSITION
       `;
 
       const result = await request.query(query);
@@ -294,16 +311,16 @@ export class SQLServerConnector implements Connector {
     try {
       // In SQL Server, use 'dbo' as the default schema if none specified
       const schemaToUse = schema || 'dbo';
-      
+
       const request = this.connection.request()
         .input('schema', sql.VarChar, schemaToUse);
-      
+
       const query = `
-        SELECT ROUTINE_NAME
-        FROM INFORMATION_SCHEMA.ROUTINES
-        WHERE ROUTINE_SCHEMA = @schema
-        AND (ROUTINE_TYPE = 'PROCEDURE' OR ROUTINE_TYPE = 'FUNCTION')
-        ORDER BY ROUTINE_NAME
+          SELECT ROUTINE_NAME
+          FROM INFORMATION_SCHEMA.ROUTINES
+          WHERE ROUTINE_SCHEMA = @schema
+            AND (ROUTINE_TYPE = 'PROCEDURE' OR ROUTINE_TYPE = 'FUNCTION')
+          ORDER BY ROUTINE_NAME
       `;
 
       const result = await request.query(query);
@@ -321,75 +338,73 @@ export class SQLServerConnector implements Connector {
     try {
       // In SQL Server, use 'dbo' as the default schema if none specified
       const schemaToUse = schema || 'dbo';
-      
+
       const request = this.connection.request()
         .input('procedureName', sql.VarChar, procedureName)
         .input('schema', sql.VarChar, schemaToUse);
-      
+
       // First, get basic procedure information
       const routineQuery = `
-        SELECT 
-          ROUTINE_NAME as procedure_name,
-          ROUTINE_TYPE,
-          DATA_TYPE as return_data_type
-        FROM INFORMATION_SCHEMA.ROUTINES
-        WHERE ROUTINE_NAME = @procedureName
-        AND ROUTINE_SCHEMA = @schema
+          SELECT ROUTINE_NAME as procedure_name,
+                 ROUTINE_TYPE,
+                 DATA_TYPE    as return_data_type
+          FROM INFORMATION_SCHEMA.ROUTINES
+          WHERE ROUTINE_NAME = @procedureName
+            AND ROUTINE_SCHEMA = @schema
       `;
 
       const routineResult = await request.query(routineQuery);
-      
+
       if (routineResult.recordset.length === 0) {
         throw new Error(`Stored procedure '${procedureName}' not found in schema '${schemaToUse}'`);
       }
-      
+
       const routine = routineResult.recordset[0];
-      
+
       // Next, get parameter information
       const parameterQuery = `
-        SELECT 
-          PARAMETER_NAME,
-          PARAMETER_MODE,
-          DATA_TYPE,
-          CHARACTER_MAXIMUM_LENGTH,
-          ORDINAL_POSITION
-        FROM INFORMATION_SCHEMA.PARAMETERS
-        WHERE SPECIFIC_NAME = @procedureName
-        AND SPECIFIC_SCHEMA = @schema
-        ORDER BY ORDINAL_POSITION
+          SELECT PARAMETER_NAME,
+                 PARAMETER_MODE,
+                 DATA_TYPE,
+                 CHARACTER_MAXIMUM_LENGTH,
+                 ORDINAL_POSITION
+          FROM INFORMATION_SCHEMA.PARAMETERS
+          WHERE SPECIFIC_NAME = @procedureName
+            AND SPECIFIC_SCHEMA = @schema
+          ORDER BY ORDINAL_POSITION
       `;
-      
+
       const parameterResult = await request.query(parameterQuery);
-      
+
       // Format the parameter list
       let parameterList = '';
       if (parameterResult.recordset.length > 0) {
         parameterList = parameterResult.recordset
           .map(param => {
-            const lengthStr = param.CHARACTER_MAXIMUM_LENGTH > 0 ? 
+            const lengthStr = param.CHARACTER_MAXIMUM_LENGTH > 0 ?
               `(${param.CHARACTER_MAXIMUM_LENGTH})` : '';
             return `${param.PARAMETER_NAME} ${param.PARAMETER_MODE} ${param.DATA_TYPE}${lengthStr}`;
           })
           .join(', ');
       }
-      
+
       // Get the procedure definition from sys.sql_modules
       const definitionQuery = `
-        SELECT definition 
-        FROM sys.sql_modules sm
-        JOIN sys.objects o ON sm.object_id = o.object_id
-        JOIN sys.schemas s ON o.schema_id = s.schema_id
-        WHERE o.name = @procedureName
-        AND s.name = @schema
+          SELECT definition
+          FROM sys.sql_modules sm
+                   JOIN sys.objects o ON sm.object_id = o.object_id
+                   JOIN sys.schemas s ON o.schema_id = s.schema_id
+          WHERE o.name = @procedureName
+            AND s.name = @schema
       `;
-      
+
       const definitionResult = await request.query(definitionQuery);
       let definition = undefined;
-      
+
       if (definitionResult.recordset.length > 0) {
         definition = definitionResult.recordset[0].definition;
       }
-      
+
       return {
         procedure_name: routine.procedure_name,
         procedure_type: routine.ROUTINE_TYPE === 'PROCEDURE' ? 'procedure' : 'function',
@@ -419,8 +434,8 @@ export class SQLServerConnector implements Connector {
         rows: result.recordset || [],
         fields: result.recordset && result.recordset.length > 0
           ? Object.keys(result.recordset[0]).map(key => ({
-              name: key,
-            }))
+            name: key,
+          }))
           : [],
         rowCount: result.rowsAffected[0] || 0,
       };
@@ -438,7 +453,7 @@ export class SQLServerConnector implements Connector {
         message: "Only SELECT queries are allowed for security reasons."
       };
     }
-    return { isValid: true };
+    return {isValid: true};
   }
 }
 
