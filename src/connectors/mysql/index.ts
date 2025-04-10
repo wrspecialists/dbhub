@@ -20,7 +20,7 @@ class MySQLDSNParser implements DSNParser {
         port: url.port ? parseInt(url.port) : 3306,
         database: url.pathname.substring(1), // Remove leading '/'
         user: url.username,
-        password: url.password,
+        password: url.password ? decodeURIComponent(url.password) : '',
       };
       
       // Handle query parameters
