@@ -19,7 +19,7 @@ export class SQLServerDSNParser implements DSNParser {
     const port = url.port ? parseInt(url.port, 10) : 1433; // Default SQL Server port
     const database = url.pathname.substring(1); // Remove leading slash
     const user = url.username;
-    const password = url.password;
+    const password = url.password ? decodeURIComponent(url.password) : '';
 
     let authenticationType: string | undefined;
 

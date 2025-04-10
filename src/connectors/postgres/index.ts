@@ -23,7 +23,7 @@ class PostgresDSNParser implements DSNParser {
         port: url.port ? parseInt(url.port) : 5432,
         database: url.pathname.substring(1), // Remove leading '/'
         user: url.username,
-        password: url.password,
+        password: url.password ? decodeURIComponent(url.password) : '',
       };
       
       // Handle query parameters (like sslmode, etc.)
