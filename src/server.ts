@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 
 import { ConnectorManager } from './connectors/manager.js';
 import { ConnectorRegistry } from './connectors/interface.js';
-import { resolveDSN, resolveTransport, resolvePort, isDemoMode } from './config/env.js';
+import { resolveDSN, resolveTransport, resolvePort, isDemoMode, redactDSN } from './config/env.js';
 import { getSqliteInMemorySetupSql } from './config/demo-loader.js';
 import { registerResources } from './resources/index.js';
 import { registerTools } from './tools/index.js';
@@ -88,7 +88,7 @@ See documentation for more details on configuring database connections.
     
     // Create connector manager and connect to database
     const connectorManager = new ConnectorManager();
-    console.error(`Connecting with DSN: ${dsnData.dsn}`);
+    console.error(`Connecting with DSN: ${redactDSN(dsnData.dsn)}`);
     console.error(`DSN source: ${dsnData.source}`);
     
     // If in demo mode, load the employee database
