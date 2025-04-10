@@ -7,7 +7,7 @@ import { Connector, ConnectorRegistry, DSNParser, QueryResult, TableColumn, Tabl
  * Handles DSN strings like: postgres://user:password@localhost:5432/dbname?sslmode=disable
  */
 class PostgresDSNParser implements DSNParser {
-  parse(dsn: string): pg.PoolConfig {
+  async parse(dsn: string): Promise<pg.PoolConfig> {
     // Basic validation
     if (!this.isValidDSN(dsn)) {
       throw new Error(`Invalid PostgreSQL DSN: ${dsn}`);
@@ -66,7 +66,7 @@ export class PostgresConnector implements Connector {
 
   async connect(dsn: string): Promise<void> {
     try {
-      const config = this.dsnParser.parse(dsn);
+      const config = await this.dsnParser.parse(dsn);
       this.pool = new Pool(config);
       
       // Test the connection

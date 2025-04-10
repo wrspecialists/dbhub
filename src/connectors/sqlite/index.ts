@@ -18,7 +18,7 @@ import Database from 'better-sqlite3';
  * - sqlite::memory: (in-memory database)
  */
 class SQLiteDSNParser implements DSNParser {
-  parse(dsn: string): { dbPath: string } {
+  async parse(dsn: string): Promise<{ dbPath: string }> {
     // Basic validation
     if (!this.isValidDSN(dsn)) {
       throw new Error(`Invalid SQLite DSN: ${dsn}`);
@@ -85,7 +85,7 @@ export class SQLiteConnector implements Connector {
   private dbPath: string = ':memory:'; // Default to in-memory database
 
   async connect(dsn: string, initScript?: string): Promise<void> {
-    const config = this.dsnParser.parse(dsn);
+    const config = await this.dsnParser.parse(dsn);
     this.dbPath = config.dbPath;
     
     try {

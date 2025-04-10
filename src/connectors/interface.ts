@@ -43,7 +43,7 @@ export interface DSNParser {
    * - MySQL: "mysql://user:password@localhost:3306/dbname"
    * - SQLite: "sqlite:///path/to/database.db" or "sqlite::memory:"
    */
-  parse(dsn: string): any;
+  parse(dsn: string): Promise<any>;
   
   /**
    * Generate a sample DSN string for this connector type

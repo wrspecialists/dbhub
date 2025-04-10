@@ -194,6 +194,14 @@ DBHub supports the following database connection string formats:
 | SQL Server | `sqlserver://[user]:[password]@[host]:[port]/[database]` | `sqlserver://user:password@localhost:1433/dbname`                |
 | SQLite     | `sqlite:///[path/to/file]` or `sqlite::memory:`          | `sqlite:///path/to/database.db` or `sqlite::memory:`             |
 
+#### SQL Server
+
+Extra query parameters:
+
+#### authentication
+
+- `authentication=azure-active-directory-access-token`. Only applicable when running from Azure. See [DefaultAzureCredential](https://learn.microsoft.com/en-us/azure/developer/javascript/sdk/authentication/credential-chains#use-defaultazurecredential-for-flexibility).
+
 ### Transport
 
 - **stdio** (default) - for direct integration with tools like Claude Desktop:

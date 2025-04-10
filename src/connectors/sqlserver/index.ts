@@ -7,7 +7,7 @@ import {DefaultAzureCredential} from "@azure/identity";
  * Expected format: mssql://username:password@host:port/database
  */
 export class SQLServerDSNParser implements DSNParser {
-  parse(dsn: string): sql.config {
+  async parse(dsn: string): Promise<sql.config> {
     // Remove the protocol prefix
     if (!this.isValidDSN(dsn)) {
       throw new Error('Invalid SQL Server DSN format. Expected: sqlserver://username:password@host:port/database');
@@ -20,8 +20,6 @@ export class SQLServerDSNParser implements DSNParser {
     const database = url.pathname.substring(1); // Remove leading slash
     const user = url.username;
     const password = url.password ? decodeURIComponent(url.password) : '';
-
-    let authenticationType: string | undefined;
 
     // Parse additional options from query parameters
     const options: Record<string, any> = {};
@@ -54,19 +52,26 @@ export class SQLServerDSNParser implements DSNParser {
       },
     };
 
-
-    const credential = new DefaultAzureCredential();
-    const accessToken = credential.getToken('https://database.windows.net/.default');
-
-
-    if (authenticationType) {
-      const credential = new DefaultAzureCredential();
-      config.authentication = {
-        type: authenticationType,
-        options: {
-          token: credential.getToken('https://database.windows.net/.default'),
-        },
-      };
+    // Handle Azure Active Directory authentication with access token
+    if (options.authentication === "azure-active-directory-access-token") {
+      try {        
+        // Create a credential instance
+        const credential = new DefaultAzureCredential();
+        
+        // Get token for SQL Server resource
+        const token = await credential.getToken("https://database.windows.net/");
+        
+        // Set the token in the config
+        config.authentication = {
+          type: "azure-active-directory-access-token",
+          options: {
+            token: token.token
+          }
+        };
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to get Azure AD token: ${errorMessage}`);
+      }
     }
 
     return config;
@@ -99,7 +104,7 @@ export class SQLServerConnector implements Connector {
 
   async connect(dsn: string): Promise<void> {
     try {
-      this.config = this.dsnParser.parse(dsn);
+      this.config = await this.dsnParser.parse(dsn);
 
       if (!this.config.options) {
         this.config.options = {};

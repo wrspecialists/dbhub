@@ -6,7 +6,7 @@ import { Connector, ConnectorRegistry, DSNParser, QueryResult, TableColumn, Tabl
  * Handles DSN strings like: mysql://user:password@localhost:3306/dbname
  */
 class MySQLDSNParser implements DSNParser {
-  parse(dsn: string): mysql.ConnectionOptions {
+  async parse(dsn: string): Promise<mysql.ConnectionOptions> {
     // Basic validation
     if (!this.isValidDSN(dsn)) {
       throw new Error(`Invalid MySQL DSN: ${dsn}`);
@@ -63,7 +63,7 @@ export class MySQLConnector implements Connector {
 
   async connect(dsn: string): Promise<void> {
     try {
-      const config = this.dsnParser.parse(dsn);
+      const config = await this.dsnParser.parse(dsn);
       this.pool = mysql.createPool(config);
       
       // Test the connection

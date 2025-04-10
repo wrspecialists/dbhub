@@ -6,7 +6,7 @@ import { Connector, ConnectorRegistry, DSNParser, QueryResult, TableColumn, Tabl
  * Handles DSN strings like: mariadb://user:password@localhost:3306/dbname
  */
 class MariadbDSNParser implements DSNParser {
-  parse(dsn: string): mariadb.ConnectionConfig {
+  async parse(dsn: string): Promise<mariadb.ConnectionConfig> {
     // Basic validation
     if (!this.isValidDSN(dsn)) {
       throw new Error(`Invalid MariaDB DSN: ${dsn}`);
@@ -63,7 +63,7 @@ export class MariaDBConnector implements Connector {
 
   async connect(dsn: string): Promise<void> {
     try {
-      const config = this.dsnParser.parse(dsn);
+      const config = await this.dsnParser.parse(dsn);
 
       this.pool = mariadb.createPool(config);
       
