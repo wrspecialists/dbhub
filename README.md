@@ -20,7 +20,7 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
  |      Clients     |    |              |    |                  |
  |                  |    |              +--->+     MySQL        |
  |                  |    |              |    |                  |
- |                  |    |              +--->+  Other Databases |
+ |                  |    |              +--->+    MariaDB       |
  |                  |    |              |    |                  |
  +------------------+    +--------------+    +------------------+
       MCP Clients           MCP Server             Databases
@@ -36,28 +36,28 @@ https://demo.dbhub.ai/sse connects a [sample employee database](https://github.c
 
 ### Database Resources
 
-| Resource Name               | URI Format                                             | PostgreSQL | MySQL | SQL Server | SQLite |
-| --------------------------- | ------------------------------------------------------ | :--------: | :---: | :--------: | :----: |
-| schemas                     | `db://schemas`                                         |     ✅     |  ✅   |     ✅     |   ✅   |
-| tables_in_schema            | `db://schemas/{schemaName}/tables`                     |     ✅     |  ✅   |     ✅     |   ✅   |
-| table_structure_in_schema   | `db://schemas/{schemaName}/tables/{tableName}`         |     ✅     |  ✅   |     ✅     |   ✅   |
-| indexes_in_table            | `db://schemas/{schemaName}/tables/{tableName}/indexes` |     ✅     |  ✅   |     ✅     |   ✅   |
-| procedures_in_schema        | `db://schemas/{schemaName}/procedures`                 |     ✅     |  ✅   |     ✅     |   ❌   |
-| procedure_details_in_schema | `db://schemas/{schemaName}/procedures/{procedureName}` |     ✅     |  ✅   |     ✅     |   ❌   |
+| Resource Name               | URI Format                                             | PostgreSQL | MySQL | MariaDB | SQL Server | SQLite |
+| --------------------------- | ------------------------------------------------------ | :--------: | :---: | :-----: | :--------: | :----: |
+| schemas                     | `db://schemas`                                         |     ✅     |  ✅   |   ✅    |     ✅     |   ✅   |
+| tables_in_schema            | `db://schemas/{schemaName}/tables`                     |     ✅     |  ✅   |   ✅    |     ✅     |   ✅   |
+| table_structure_in_schema   | `db://schemas/{schemaName}/tables/{tableName}`         |     ✅     |  ✅   |   ✅    |     ✅     |   ✅   |
+| indexes_in_table            | `db://schemas/{schemaName}/tables/{tableName}/indexes` |     ✅     |  ✅   |   ✅    |     ✅     |   ✅   |
+| procedures_in_schema        | `db://schemas/{schemaName}/procedures`                 |     ✅     |  ✅   |   ✅    |     ✅     |   ❌   |
+| procedure_details_in_schema | `db://schemas/{schemaName}/procedures/{procedureName}` |     ✅     |  ✅   |   ✅    |     ✅     |   ❌   |
 
 ### Database Tools
 
-| Tool            | Command Name      | PostgreSQL | MySQL | SQL Server | SQLite |
-| --------------- | ----------------- | :--------: | :---: | :--------: | :----: |
-| Execute Query   | `run_query`       |     ✅     |  ✅   |     ✅     |   ✅   |   ✅   |
-| List Connectors | `list_connectors` |     ✅     |  ✅   |     ✅     |   ✅   |   ✅   |
+| Tool            | Command Name      | PostgreSQL | MySQL | MariaDB | SQL Server | SQLite |
+| --------------- | ----------------- | :--------: | :---: | :-----: | :--------: | ------ |
+| Execute Query   | `run_query`       |     ✅     |  ✅   |   ✅    |     ✅     | ✅     |
+| List Connectors | `list_connectors` |     ✅     |  ✅   |   ✅    |     ✅     | ✅     |
 
 ### Prompt Capabilities
 
-| Prompt              | Command Name   | PostgreSQL | MySQL | SQL Server | SQLite |
-| ------------------- | -------------- | :--------: | :---: | :--------: | :----: |
-| Generate SQL        | `generate_sql` |     ✅     |  ✅   |     ✅     |   ✅   |   ✅   |
-| Explain DB Elements | `explain_db`   |     ✅     |  ✅   |     ✅     |   ✅   |   ✅   |
+| Prompt              | Command Name   | PostgreSQL | MySQL | MariaDB | SQL Server | SQLite |
+| ------------------- | -------------- | :--------: | :---: | :-----: | :--------: | ------ |
+| Generate SQL        | `generate_sql` |     ✅     |  ✅   |   ✅    |     ✅     | ✅     |
+| Explain DB Elements | `explain_db`   |     ✅     |  ✅   |   ✅    |     ✅     | ✅     |
 
 ## Installation
 
@@ -188,11 +188,11 @@ DBHub supports the following database connection string formats:
 
 | Database   | DSN Format                                               | Example                                                          |
 | ---------- | -------------------------------------------------------- | ---------------------------------------------------------------- |
-| PostgreSQL | `postgres://[user]:[password]@[host]:[port]/[database]`  | `postgres://user:password@localhost:5432/dbname?sslmode=disable` |
-| SQLite     | `sqlite:///[path/to/file]` or `sqlite::memory:`          | `sqlite:///path/to/database.db` or `sqlite::memory:`             |
-| SQL Server | `sqlserver://[user]:[password]@[host]:[port]/[database]` | `sqlserver://user:password@localhost:1433/dbname`                |
 | MySQL      | `mysql://[user]:[password]@[host]:[port]/[database]`     | `mysql://user:password@localhost:3306/dbname`                    |
 | MariaDB    | `mariadb://[user]:[password]@[host]:[port]/[database]`   | `mariadb://user:password@localhost:3306/dbname`                  |
+| PostgreSQL | `postgres://[user]:[password]@[host]:[port]/[database]`  | `postgres://user:password@localhost:5432/dbname?sslmode=disable` |
+| SQL Server | `sqlserver://[user]:[password]@[host]:[port]/[database]` | `sqlserver://user:password@localhost:1433/dbname`                |
+| SQLite     | `sqlite:///[path/to/file]` or `sqlite::memory:`          | `sqlite:///path/to/database.db` or `sqlite::memory:`             |
 
 ### Transport
 
