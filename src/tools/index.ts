@@ -9,6 +9,7 @@ export function registerTools(server: McpServer): void {
   // Tool to run a SQL query (read-only for safety)
   server.tool(
     "run_query",
+    "Run a SQL query on the current database",
     runQuerySchema,
     runQueryToolHandler
   );
@@ -16,6 +17,7 @@ export function registerTools(server: McpServer): void {
   // Tool to list available database connectors
   server.tool(
     "list_connectors",
+    "List all available database connectors",
     {},
     listConnectorsToolHandler
   );
