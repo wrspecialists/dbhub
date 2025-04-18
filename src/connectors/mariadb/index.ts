@@ -42,9 +42,7 @@ class MariadbDSNParser implements DSNParser {
 
       return config;
     } catch (error) {
-      throw new Error(
-        `Failed to parse MariaDB DSN: ${error instanceof Error ? error.message : String(error)}`
-      );
+      throw new Error(`Failed to parse MariaDB DSN: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -295,9 +293,7 @@ export class MariaDBConnector implements Connector {
 
     try {
       // In MariaDB, if no schema is provided, use the current database context
-      const schemaClause = schema
-        ? 'WHERE ROUTINE_SCHEMA = ?'
-        : 'WHERE ROUTINE_SCHEMA = DATABASE()';
+      const schemaClause = schema ? 'WHERE ROUTINE_SCHEMA = ?' : 'WHERE ROUTINE_SCHEMA = DATABASE()';
 
       const queryParams = schema ? [schema] : [];
 
@@ -326,9 +322,7 @@ export class MariaDBConnector implements Connector {
 
     try {
       // In MariaDB, if no schema is provided, use the current database context
-      const schemaClause = schema
-        ? 'WHERE r.ROUTINE_SCHEMA = ?'
-        : 'WHERE r.ROUTINE_SCHEMA = DATABASE()';
+      const schemaClause = schema ? 'WHERE r.ROUTINE_SCHEMA = ?' : 'WHERE r.ROUTINE_SCHEMA = DATABASE()';
 
       const queryParams = schema ? [schema, procedureName] : [procedureName];
 

@@ -45,9 +45,7 @@ class PostgresDSNParser implements DSNParser {
 
       return config;
     } catch (error) {
-      throw new Error(
-        `Failed to parse PostgreSQL DSN: ${error instanceof Error ? error.message : String(error)}`
-      );
+      throw new Error(`Failed to parse PostgreSQL DSN: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

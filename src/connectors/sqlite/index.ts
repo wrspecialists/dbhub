@@ -55,9 +55,7 @@ class SQLiteDSNParser implements DSNParser {
 
       return { dbPath };
     } catch (error) {
-      throw new Error(
-        `Failed to parse SQLite DSN: ${error instanceof Error ? error.message : String(error)}`
-      );
+      throw new Error(`Failed to parse SQLite DSN: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -212,9 +210,7 @@ export class SQLiteConnector implements Connector {
         .all(tableName) as { index_name: string; is_unique: number }[];
 
       // Get the primary key info
-      const tableInfo = this.db
-        .prepare(`PRAGMA table_info(${tableName})`)
-        .all() as SQLiteTableInfo[];
+      const tableInfo = this.db.prepare(`PRAGMA table_info(${tableName})`).all() as SQLiteTableInfo[];
 
       // Find primary key columns
       const pkColumns = tableInfo.filter((col) => col.pk > 0).map((col) => col.name);
@@ -224,9 +220,9 @@ export class SQLiteConnector implements Connector {
       // Add regular indexes
       for (const indexInfo of indexInfoRows) {
         // Get the columns for this index
-        const indexDetailRows = this.db
-          .prepare(`PRAGMA index_info(${indexInfo.index_name})`)
-          .all() as { name: string }[];
+        const indexDetailRows = this.db.prepare(`PRAGMA index_info(${indexInfo.index_name})`).all() as {
+          name: string;
+        }[];
         const columnNames = indexDetailRows.map((row) => row.name);
 
         results.push({

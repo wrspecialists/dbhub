@@ -19,9 +19,7 @@ export class SQLServerDSNParser implements DSNParser {
   async parse(dsn: string): Promise<sql.config> {
     // Remove the protocol prefix
     if (!this.isValidDSN(dsn)) {
-      throw new Error(
-        'Invalid SQL Server DSN format. Expected: sqlserver://username:password@host:port/database'
-      );
+      throw new Error('Invalid SQL Server DSN format. Expected: sqlserver://username:password@host:port/database');
     }
 
     // Parse the DSN
@@ -402,14 +400,8 @@ export class SQLServerConnector implements Connector {
       if (parameterResult.recordset.length > 0) {
         parameterList = parameterResult.recordset
           .map(
-            (param: {
-              CHARACTER_MAXIMUM_LENGTH: number;
-              PARAMETER_NAME: any;
-              PARAMETER_MODE: any;
-              DATA_TYPE: any;
-            }) => {
-              const lengthStr =
-                param.CHARACTER_MAXIMUM_LENGTH > 0 ? `(${param.CHARACTER_MAXIMUM_LENGTH})` : '';
+            (param: { CHARACTER_MAXIMUM_LENGTH: number; PARAMETER_NAME: any; PARAMETER_MODE: any; DATA_TYPE: any }) => {
+              const lengthStr = param.CHARACTER_MAXIMUM_LENGTH > 0 ? `(${param.CHARACTER_MAXIMUM_LENGTH})` : '';
               return `${param.PARAMETER_NAME} ${param.PARAMETER_MODE} ${param.DATA_TYPE}${lengthStr}`;
             }
           )
