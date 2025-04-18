@@ -1,4 +1,4 @@
-import mariadb from "mariadb";
+import mariadb from 'mariadb';
 import {
   Connector,
   ConnectorRegistry,
@@ -7,8 +7,8 @@ import {
   TableColumn,
   TableIndex,
   StoredProcedure,
-} from "../interface.js";
-import { allowedKeywords } from "../../utils/allowed-keywords.js";
+} from '../interface.js';
+import { allowedKeywords } from '../../utils/allowed-keywords.js';
 
 /**
  * MariaDB DSN Parser
@@ -34,8 +34,8 @@ class MariadbDSNParser implements DSNParser {
 
       // Handle query parameters
       url.searchParams.forEach((value, key) => {
-        if (key === "ssl") {
-          config.ssl = value === "true" ? {} : undefined;
+        if (key === 'ssl') {
+          config.ssl = value === 'true' ? {} : undefined;
         }
         // Add other parameters as needed
       });
@@ -43,21 +43,19 @@ class MariadbDSNParser implements DSNParser {
       return config;
     } catch (error) {
       throw new Error(
-        `Failed to parse MariaDB DSN: ${
-          error instanceof Error ? error.message : String(error)
-        }`
+        `Failed to parse MariaDB DSN: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
 
   getSampleDSN(): string {
-    return "mariadb://root:password@localhost:3306/db";
+    return 'mariadb://root:password@localhost:3306/db';
   }
 
   isValidDSN(dsn: string): boolean {
     try {
       const url = new URL(dsn);
-      return url.protocol === "mariadb:";
+      return url.protocol === 'mariadb:';
     } catch (error) {
       return false;
     }
@@ -68,8 +66,8 @@ class MariadbDSNParser implements DSNParser {
  * MariaDB Connector Implementation
  */
 export class MariaDBConnector implements Connector {
-  id = "mariadb";
-  name = "MariaDB";
+  id = 'mariadb';
+  name = 'MariaDB';
   dsnParser = new MariadbDSNParser();
 
   private pool: mariadb.Pool | null = null;
@@ -81,11 +79,11 @@ export class MariaDBConnector implements Connector {
       this.pool = mariadb.createPool(config);
 
       // Test the connection
-      console.error("Testing connection to MariaDB...");
-      const [rows] = await this.pool.query("SELECT 1");
-      console.error("Successfully connected to MariaDB database");
+      console.error('Testing connection to MariaDB...');
+      const [rows] = await this.pool.query('SELECT 1');
+      console.error('Successfully connected to MariaDB database');
     } catch (err) {
-      console.error("Failed to connect to MariaDB database:", err);
+      console.error('Failed to connect to MariaDB database:', err);
       throw err;
     }
   }
@@ -99,7 +97,7 @@ export class MariaDBConnector implements Connector {
 
   async getSchemas(): Promise<string[]> {
     if (!this.pool) {
-      throw new Error("Not connected to database");
+      throw new Error('Not connected to database');
     }
 
     try {
@@ -112,23 +110,21 @@ export class MariaDBConnector implements Connector {
 
       return rows.map((row) => row.SCHEMA_NAME);
     } catch (error) {
-      console.error("Error getting schemas:", error);
+      console.error('Error getting schemas:', error);
       throw error;
     }
   }
 
   async getTables(schema?: string): Promise<string[]> {
     if (!this.pool) {
-      throw new Error("Not connected to database");
+      throw new Error('Not connected to database');
     }
 
     try {
       // In MariaDB, if no schema is provided, use the current active database (DATABASE())
       // MariaDB uses the terms 'database' and 'schema' interchangeably
       // The DATABASE() function returns the current database context
-      const schemaClause = schema
-        ? "WHERE TABLE_SCHEMA = ?"
-        : "WHERE TABLE_SCHEMA = DATABASE()";
+      const schemaClause = schema ? 'WHERE TABLE_SCHEMA = ?' : 'WHERE TABLE_SCHEMA = DATABASE()';
 
       const queryParams = schema ? [schema] : [];
 
@@ -145,22 +141,20 @@ export class MariaDBConnector implements Connector {
 
       return rows.map((row) => row.TABLE_NAME);
     } catch (error) {
-      console.error("Error getting tables:", error);
+      console.error('Error getting tables:', error);
       throw error;
     }
   }
 
   async tableExists(tableName: string, schema?: string): Promise<boolean> {
     if (!this.pool) {
-      throw new Error("Not connected to database");
+      throw new Error('Not connected to database');
     }
 
     try {
       // In MariaDB, if no schema is provided, use the current active database
       // DATABASE() function returns the name of the current database
-      const schemaClause = schema
-        ? "WHERE TABLE_SCHEMA = ?"
-        : "WHERE TABLE_SCHEMA = DATABASE()";
+      const schemaClause = schema ? 'WHERE TABLE_SCHEMA = ?' : 'WHERE TABLE_SCHEMA = DATABASE()';
 
       const queryParams = schema ? [schema, tableName] : [tableName];
 
@@ -176,24 +170,19 @@ export class MariaDBConnector implements Connector {
 
       return rows[0].COUNT > 0;
     } catch (error) {
-      console.error("Error checking if table exists:", error);
+      console.error('Error checking if table exists:', error);
       throw error;
     }
   }
 
-  async getTableIndexes(
-    tableName: string,
-    schema?: string
-  ): Promise<TableIndex[]> {
+  async getTableIndexes(tableName: string, schema?: string): Promise<TableIndex[]> {
     if (!this.pool) {
-      throw new Error("Not connected to database");
+      throw new Error('Not connected to database');
     }
 
     try {
       // In MariaDB, if no schema is provided, use the current active database
-      const schemaClause = schema
-        ? "TABLE_SCHEMA = ?"
-        : "TABLE_SCHEMA = DATABASE()";
+      const schemaClause = schema ? 'TABLE_SCHEMA = ?' : 'TABLE_SCHEMA = DATABASE()';
 
       const queryParams = schema ? [schema, tableName] : [tableName];
 
@@ -231,7 +220,7 @@ export class MariaDBConnector implements Connector {
         const indexName = row.INDEX_NAME;
         const columnName = row.COLUMN_NAME;
         const isUnique = row.NON_UNIQUE === 0; // In MariaDB, NON_UNIQUE=0 means the index is unique
-        const isPrimary = indexName === "PRIMARY";
+        const isPrimary = indexName === 'PRIMARY';
 
         if (!indexMap.has(indexName)) {
           indexMap.set(indexName, {
@@ -258,26 +247,21 @@ export class MariaDBConnector implements Connector {
 
       return results;
     } catch (error) {
-      console.error("Error getting table indexes:", error);
+      console.error('Error getting table indexes:', error);
       throw error;
     }
   }
 
-  async getTableSchema(
-    tableName: string,
-    schema?: string
-  ): Promise<TableColumn[]> {
+  async getTableSchema(tableName: string, schema?: string): Promise<TableColumn[]> {
     if (!this.pool) {
-      throw new Error("Not connected to database");
+      throw new Error('Not connected to database');
     }
 
     try {
       // In MariaDB, schema is synonymous with database
       // If no schema is provided, use the current database context via DATABASE() function
       // This means tables will be retrieved from whatever database the connection is currently using
-      const schemaClause = schema
-        ? "WHERE TABLE_SCHEMA = ?"
-        : "WHERE TABLE_SCHEMA = DATABASE()";
+      const schemaClause = schema ? 'WHERE TABLE_SCHEMA = ?' : 'WHERE TABLE_SCHEMA = DATABASE()';
 
       const queryParams = schema ? [schema, tableName] : [tableName];
 
@@ -299,21 +283,21 @@ export class MariaDBConnector implements Connector {
 
       return rows;
     } catch (error) {
-      console.error("Error getting table schema:", error);
+      console.error('Error getting table schema:', error);
       throw error;
     }
   }
 
   async getStoredProcedures(schema?: string): Promise<string[]> {
     if (!this.pool) {
-      throw new Error("Not connected to database");
+      throw new Error('Not connected to database');
     }
 
     try {
       // In MariaDB, if no schema is provided, use the current database context
       const schemaClause = schema
-        ? "WHERE ROUTINE_SCHEMA = ?"
-        : "WHERE ROUTINE_SCHEMA = DATABASE()";
+        ? 'WHERE ROUTINE_SCHEMA = ?'
+        : 'WHERE ROUTINE_SCHEMA = DATABASE()';
 
       const queryParams = schema ? [schema] : [];
 
@@ -330,24 +314,21 @@ export class MariaDBConnector implements Connector {
 
       return rows.map((row) => row.ROUTINE_NAME);
     } catch (error) {
-      console.error("Error getting stored procedures:", error);
+      console.error('Error getting stored procedures:', error);
       throw error;
     }
   }
 
-  async getStoredProcedureDetail(
-    procedureName: string,
-    schema?: string
-  ): Promise<StoredProcedure> {
+  async getStoredProcedureDetail(procedureName: string, schema?: string): Promise<StoredProcedure> {
     if (!this.pool) {
-      throw new Error("Not connected to database");
+      throw new Error('Not connected to database');
     }
 
     try {
       // In MariaDB, if no schema is provided, use the current database context
       const schemaClause = schema
-        ? "WHERE r.ROUTINE_SCHEMA = ?"
-        : "WHERE r.ROUTINE_SCHEMA = DATABASE()";
+        ? 'WHERE r.ROUTINE_SCHEMA = ?'
+        : 'WHERE r.ROUTINE_SCHEMA = DATABASE()';
 
       const queryParams = schema ? [schema, procedureName] : [procedureName];
 
@@ -382,10 +363,8 @@ export class MariaDBConnector implements Connector {
       )) as [any[], any];
 
       if (rows.length === 0) {
-        const schemaName = schema || "current schema";
-        throw new Error(
-          `Stored procedure '${procedureName}' not found in ${schemaName}`
-        );
+        const schemaName = schema || 'current schema';
+        throw new Error(`Stored procedure '${procedureName}' not found in ${schemaName}`);
       }
 
       const procedure = rows[0];
@@ -397,7 +376,7 @@ export class MariaDBConnector implements Connector {
         const schemaValue = schema || (await this.getCurrentSchema());
 
         // For full definition - different approaches based on type
-        if (procedure.procedure_type === "procedure") {
+        if (procedure.procedure_type === 'procedure') {
           // Try to get the definition from SHOW CREATE PROCEDURE
           try {
             const [defRows] = (await this.pool.query(`
@@ -405,12 +384,10 @@ export class MariaDBConnector implements Connector {
             `)) as [any[], any];
 
             if (defRows && defRows.length > 0) {
-              definition = defRows[0]["Create Procedure"];
+              definition = defRows[0]['Create Procedure'];
             }
           } catch (err) {
-            console.error(
-              `Error getting procedure definition with SHOW CREATE: ${err}`
-            );
+            console.error(`Error getting procedure definition with SHOW CREATE: ${err}`);
           }
         } else {
           // Try to get the definition for functions
@@ -420,12 +397,10 @@ export class MariaDBConnector implements Connector {
             `)) as [any[], any];
 
             if (defRows && defRows.length > 0) {
-              definition = defRows[0]["Create Function"];
+              definition = defRows[0]['Create Function'];
             }
           } catch (innerErr) {
-            console.error(
-              `Error getting function definition with SHOW CREATE: ${innerErr}`
-            );
+            console.error(`Error getting function definition with SHOW CREATE: ${innerErr}`);
           }
         }
 
@@ -456,44 +431,38 @@ export class MariaDBConnector implements Connector {
       return {
         procedure_name: procedure.procedure_name,
         procedure_type: procedure.procedure_type,
-        language: "sql", // MariaDB procedures are generally in SQL
-        parameter_list: procedure.parameter_list || "",
-        return_type:
-          procedure.routine_type === "function"
-            ? procedure.return_type
-            : undefined,
+        language: 'sql', // MariaDB procedures are generally in SQL
+        parameter_list: procedure.parameter_list || '',
+        return_type: procedure.routine_type === 'function' ? procedure.return_type : undefined,
         definition: definition || undefined,
       };
     } catch (error) {
-      console.error("Error getting stored procedure detail:", error);
+      console.error('Error getting stored procedure detail:', error);
       throw error;
     }
   }
 
   // Helper method to get current schema (database) name
   private async getCurrentSchema(): Promise<string> {
-    const [rows] = (await this.pool!.query("SELECT DATABASE() AS DB")) as [
-      any[],
-      any
-    ];
+    const [rows] = (await this.pool!.query('SELECT DATABASE() AS DB')) as [any[], any];
     return rows[0].DB;
   }
 
   async executeQuery(query: string): Promise<QueryResult> {
     if (!this.pool) {
-      throw new Error("Not connected to database");
+      throw new Error('Not connected to database');
     }
 
     const safetyCheck = this.validateQuery(query);
     if (!safetyCheck.isValid) {
-      throw new Error(safetyCheck.message || "Query validation failed");
+      throw new Error(safetyCheck.message || 'Query validation failed');
     }
 
     try {
       const [rows, fields] = (await this.pool.query(query)) as [any[], any];
       return { rows, fields };
     } catch (error) {
-      console.error("Error executing query:", error);
+      console.error('Error executing query:', error);
       throw error;
     }
   }
@@ -501,12 +470,10 @@ export class MariaDBConnector implements Connector {
   validateQuery(query: string): { isValid: boolean; message?: string } {
     // Basic check to prevent non-SELECT queries
     const normalizedQuery = query.trim().toLowerCase();
-    if (
-      !allowedKeywords.some((keyword) => normalizedQuery.startsWith(keyword))
-    ) {
+    if (!allowedKeywords.some((keyword) => normalizedQuery.startsWith(keyword))) {
       return {
         isValid: false,
-        message: "Only SELECT queries are allowed for security reasons.",
+        message: 'Only SELECT queries are allowed for security reasons.',
       };
     }
     return { isValid: true };

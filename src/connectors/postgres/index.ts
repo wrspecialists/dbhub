@@ -1,4 +1,4 @@
-import pg from "pg";
+import pg from 'pg';
 const { Pool } = pg;
 import {
   Connector,
@@ -8,8 +8,8 @@ import {
   TableColumn,
   TableIndex,
   StoredProcedure,
-} from "../interface.js";
-import { allowedKeywords } from "../../utils/allowed-keywords.js";
+} from '../interface.js';
+import { allowedKeywords } from '../../utils/allowed-keywords.js';
 
 /**
  * PostgreSQL DSN Parser
@@ -32,13 +32,13 @@ class PostgresDSNParser implements DSNParser {
         port: url.port ? parseInt(url.port) : 5432,
         database: url.pathname.substring(1), // Remove leading '/'
         user: url.username,
-        password: url.password ? decodeURIComponent(url.password) : "",
+        password: url.password ? decodeURIComponent(url.password) : '',
       };
 
       // Handle query parameters (like sslmode, etc.)
       url.searchParams.forEach((value, key) => {
-        if (key === "sslmode") {
-          config.ssl = value !== "disable";
+        if (key === 'sslmode') {
+          config.ssl = value !== 'disable';
         }
         // Add other parameters as needed
       });
@@ -46,21 +46,19 @@ class PostgresDSNParser implements DSNParser {
       return config;
     } catch (error) {
       throw new Error(
-        `Failed to parse PostgreSQL DSN: ${
-          error instanceof Error ? error.message : String(error)
-        }`
+        `Failed to parse PostgreSQL DSN: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
 
   getSampleDSN(): string {
-    return "postgres://postgres:password@localhost:5432/postgres?sslmode=disable";
+    return 'postgres://postgres:password@localhost:5432/postgres?sslmode=disable';
   }
 
   isValidDSN(dsn: string): boolean {
     try {
       const url = new URL(dsn);
-      return url.protocol === "postgres:" || url.protocol === "postgresql:";
+      return url.protocol === 'postgres:' || url.protocol === 'postgresql:';
     } catch (error) {
       return false;
     }
@@ -71,8 +69,8 @@ class PostgresDSNParser implements DSNParser {
  * PostgreSQL Connector Implementation
  */
 export class PostgresConnector implements Connector {
-  id = "postgres";
-  name = "PostgreSQL";
+  id = 'postgres';
+  name = 'PostgreSQL';
   dsnParser = new PostgresDSNParser();
 
   private pool: pg.Pool | null = null;
@@ -84,10 +82,10 @@ export class PostgresConnector implements Connector {
 
       // Test the connection
       const client = await this.pool.connect();
-      console.error("Successfully connected to PostgreSQL database");
+      console.error('Successfully connected to PostgreSQL database');
       client.release();
     } catch (err) {
-      console.error("Failed to connect to PostgreSQL database:", err);
+      console.error('Failed to connect to PostgreSQL database:', err);
       throw err;
     }
   }
@@ -101,7 +99,7 @@ export class PostgresConnector implements Connector {
 
   async getSchemas(): Promise<string[]> {
     if (!this.pool) {
-      throw new Error("Not connected to database");
+      throw new Error('Not connected to database');
     }
 
     const client = await this.pool.connect();
@@ -121,14 +119,14 @@ export class PostgresConnector implements Connector {
 
   async getTables(schema?: string): Promise<string[]> {
     if (!this.pool) {
-      throw new Error("Not connected to database");
+      throw new Error('Not connected to database');
     }
 
     const client = await this.pool.connect();
     try {
       // In PostgreSQL, use 'public' as the default schema if none specified
       // 'public' is the standard default schema in PostgreSQL databases
-      const schemaToUse = schema || "public";
+      const schemaToUse = schema || 'public';
 
       const result = await client.query(
         `
@@ -148,13 +146,13 @@ export class PostgresConnector implements Connector {
 
   async tableExists(tableName: string, schema?: string): Promise<boolean> {
     if (!this.pool) {
-      throw new Error("Not connected to database");
+      throw new Error('Not connected to database');
     }
 
     const client = await this.pool.connect();
     try {
       // In PostgreSQL, use 'public' as the default schema if none specified
-      const schemaToUse = schema || "public";
+      const schemaToUse = schema || 'public';
 
       const result = await client.query(
         `
@@ -173,18 +171,15 @@ export class PostgresConnector implements Connector {
     }
   }
 
-  async getTableIndexes(
-    tableName: string,
-    schema?: string
-  ): Promise<TableIndex[]> {
+  async getTableIndexes(tableName: string, schema?: string): Promise<TableIndex[]> {
     if (!this.pool) {
-      throw new Error("Not connected to database");
+      throw new Error('Not connected to database');
     }
 
     const client = await this.pool.connect();
     try {
       // In PostgreSQL, use 'public' as the default schema if none specified
-      const schemaToUse = schema || "public";
+      const schemaToUse = schema || 'public';
 
       // Query to get all indexes for the table
       const result = await client.query(
@@ -230,19 +225,16 @@ export class PostgresConnector implements Connector {
     }
   }
 
-  async getTableSchema(
-    tableName: string,
-    schema?: string
-  ): Promise<TableColumn[]> {
+  async getTableSchema(tableName: string, schema?: string): Promise<TableColumn[]> {
     if (!this.pool) {
-      throw new Error("Not connected to database");
+      throw new Error('Not connected to database');
     }
 
     const client = await this.pool.connect();
     try {
       // In PostgreSQL, use 'public' as the default schema if none specified
       // Tables are created in the 'public' schema by default unless otherwise specified
-      const schemaToUse = schema || "public";
+      const schemaToUse = schema || 'public';
 
       // Get table columns
       const result = await client.query(
@@ -268,13 +260,13 @@ export class PostgresConnector implements Connector {
 
   async getStoredProcedures(schema?: string): Promise<string[]> {
     if (!this.pool) {
-      throw new Error("Not connected to database");
+      throw new Error('Not connected to database');
     }
 
     const client = await this.pool.connect();
     try {
       // In PostgreSQL, use 'public' as the default schema if none specified
-      const schemaToUse = schema || "public";
+      const schemaToUse = schema || 'public';
 
       // Get stored procedures and functions from PostgreSQL
       const result = await client.query(
@@ -294,18 +286,15 @@ export class PostgresConnector implements Connector {
     }
   }
 
-  async getStoredProcedureDetail(
-    procedureName: string,
-    schema?: string
-  ): Promise<StoredProcedure> {
+  async getStoredProcedureDetail(procedureName: string, schema?: string): Promise<StoredProcedure> {
     if (!this.pool) {
-      throw new Error("Not connected to database");
+      throw new Error('Not connected to database');
     }
 
     const client = await this.pool.connect();
     try {
       // In PostgreSQL, use 'public' as the default schema if none specified
-      const schemaToUse = schema || "public";
+      const schemaToUse = schema || 'public';
 
       // Get stored procedure details from PostgreSQL
       const result = await client.query(
@@ -337,9 +326,7 @@ export class PostgresConnector implements Connector {
       );
 
       if (result.rows.length === 0) {
-        throw new Error(
-          `Stored procedure '${procedureName}' not found in schema '${schemaToUse}'`
-        );
+        throw new Error(`Stored procedure '${procedureName}' not found in schema '${schemaToUse}'`);
       }
 
       const procedure = result.rows[0];
@@ -364,10 +351,7 @@ export class PostgresConnector implements Connector {
           // If definition is still null, get the full definition
           if (!definition) {
             const oid = oidResult.rows[0].oid;
-            const defResult = await client.query(
-              `SELECT pg_get_functiondef($1)`,
-              [oid]
-            );
+            const defResult = await client.query(`SELECT pg_get_functiondef($1)`, [oid]);
             if (defResult.rows.length > 0) {
               definition = defResult.rows[0].pg_get_functiondef;
             } else {
@@ -384,10 +368,9 @@ export class PostgresConnector implements Connector {
       return {
         procedure_name: procedure.procedure_name,
         procedure_type: procedure.procedure_type,
-        language: procedure.language || "sql",
-        parameter_list: procedure.parameter_list || "",
-        return_type:
-          procedure.return_type !== "void" ? procedure.return_type : undefined,
+        language: procedure.language || 'sql',
+        parameter_list: procedure.parameter_list || '',
+        return_type: procedure.return_type !== 'void' ? procedure.return_type : undefined,
         definition: definition || undefined,
       };
     } finally {
@@ -397,12 +380,12 @@ export class PostgresConnector implements Connector {
 
   async executeQuery(query: string): Promise<QueryResult> {
     if (!this.pool) {
-      throw new Error("Not connected to database");
+      throw new Error('Not connected to database');
     }
 
     const safetyCheck = this.validateQuery(query);
     if (!safetyCheck.isValid) {
-      throw new Error(safetyCheck.message || "Query validation failed");
+      throw new Error(safetyCheck.message || 'Query validation failed');
     }
 
     const client = await this.pool.connect();
@@ -416,12 +399,10 @@ export class PostgresConnector implements Connector {
   validateQuery(query: string): { isValid: boolean; message?: string } {
     // Basic check to prevent non-SELECT queries
     const normalizedQuery = query.trim().toLowerCase();
-    if (
-      !allowedKeywords.some((keyword) => normalizedQuery.startsWith(keyword))
-    ) {
+    if (!allowedKeywords.some((keyword) => normalizedQuery.startsWith(keyword))) {
       return {
         isValid: false,
-        message: "Only SELECT queries are allowed for security reasons.",
+        message: 'Only SELECT queries are allowed for security reasons.',
       };
     }
     return { isValid: true };
