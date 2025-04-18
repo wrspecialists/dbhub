@@ -1,6 +1,15 @@
-import sql from 'mssql';
-import { Connector, ConnectorRegistry, DSNParser, QueryResult, TableColumn, TableIndex, StoredProcedure } from '../interface.js';
-import {DefaultAzureCredential} from "@azure/identity";
+import sql from "mssql";
+import {
+  Connector,
+  ConnectorRegistry,
+  DSNParser,
+  QueryResult,
+  TableColumn,
+  TableIndex,
+  StoredProcedure,
+} from "../interface.js";
+import { DefaultAzureCredential } from "@azure/identity";
+import { allowedKeywords } from "../../utils/allowed-keywords.js";
 
 /**
  * SQL Server DSN parser
@@ -10,7 +19,9 @@ export class SQLServerDSNParser implements DSNParser {
   async parse(dsn: string): Promise<sql.config> {
     // Remove the protocol prefix
     if (!this.isValidDSN(dsn)) {
-      throw new Error('Invalid SQL Server DSN format. Expected: sqlserver://username:password@host:port/database');
+      throw new Error(
+        "Invalid SQL Server DSN format. Expected: sqlserver://username:password@host:port/database"
+      );
     }
 
     // Parse the DSN
@@ -19,20 +30,20 @@ export class SQLServerDSNParser implements DSNParser {
     const port = url.port ? parseInt(url.port, 10) : 1433; // Default SQL Server port
     const database = url.pathname.substring(1); // Remove leading slash
     const user = url.username;
-    const password = url.password ? decodeURIComponent(url.password) : '';
+    const password = url.password ? decodeURIComponent(url.password) : "";
 
     // Parse additional options from query parameters
     const options: Record<string, any> = {};
     for (const [key, value] of url.searchParams.entries()) {
-      if (key === 'encrypt') {
+      if (key === "encrypt") {
         options.encrypt = value;
-      } else if (key === 'trustServerCertificate') {
-        options.trustServerCertificate = value === 'true';
-      } else if (key === 'connectTimeout') {
+      } else if (key === "trustServerCertificate") {
+        options.trustServerCertificate = value === "true";
+      } else if (key === "connectTimeout") {
         options.connectTimeout = parseInt(value, 10);
-      } else if (key === 'requestTimeout') {
+      } else if (key === "requestTimeout") {
         options.requestTimeout = parseInt(value, 10);
-      } else if (key === 'authentication') {
+      } else if (key === "authentication") {
         options.authentication = value;
       }
     }
@@ -54,22 +65,25 @@ export class SQLServerDSNParser implements DSNParser {
 
     // Handle Azure Active Directory authentication with access token
     if (options.authentication === "azure-active-directory-access-token") {
-      try {        
+      try {
         // Create a credential instance
         const credential = new DefaultAzureCredential();
-        
+
         // Get token for SQL Server resource
-        const token = await credential.getToken("https://database.windows.net/");
-        
+        const token = await credential.getToken(
+          "https://database.windows.net/"
+        );
+
         // Set the token in the config
         config.authentication = {
           type: "azure-active-directory-access-token",
           options: {
-            token: token.token
-          }
+            token: token.token,
+          },
         };
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         throw new Error(`Failed to get Azure AD token: ${errorMessage}`);
       }
     }
@@ -78,13 +92,13 @@ export class SQLServerDSNParser implements DSNParser {
   }
 
   getSampleDSN(): string {
-    return 'sqlserver://username:password@localhost:1433/database?encrypt=true';
+    return "sqlserver://username:password@localhost:1433/database?encrypt=true";
   }
 
   isValidDSN(dsn: string): boolean {
     try {
       const url = new URL(dsn);
-      return url.protocol === 'sqlserver:';
+      return url.protocol === "sqlserver:";
     } catch (e) {
       return false;
     }
@@ -95,8 +109,8 @@ export class SQLServerDSNParser implements DSNParser {
  * SQL Server connector
  */
 export class SQLServerConnector implements Connector {
-  id = 'sqlserver';
-  name = 'SQL Server';
+  id = "sqlserver";
+  name = "SQL Server";
   dsnParser = new SQLServerDSNParser();
 
   private connection?: sql.ConnectionPool;
@@ -125,7 +139,7 @@ export class SQLServerConnector implements Connector {
 
   async getSchemas(): Promise<string[]> {
     if (!this.connection) {
-      throw new Error('Not connected to SQL Server database');
+      throw new Error("Not connected to SQL Server database");
     }
 
     try {
@@ -135,7 +149,9 @@ export class SQLServerConnector implements Connector {
           ORDER BY SCHEMA_NAME
       `);
 
-      return result.recordset.map((row) => row.SCHEMA_NAME);
+      return result.recordset.map(
+        (row: { SCHEMA_NAME: any }) => row.SCHEMA_NAME
+      );
     } catch (error) {
       throw new Error(`Failed to get schemas: ${(error as Error).message}`);
     }
@@ -143,16 +159,17 @@ export class SQLServerConnector implements Connector {
 
   async getTables(schema?: string): Promise<string[]> {
     if (!this.connection) {
-      throw new Error('Not connected to SQL Server database');
+      throw new Error("Not connected to SQL Server database");
     }
 
     try {
       // In SQL Server, use 'dbo' as the default schema if none specified
       // This is the default schema for SQL Server databases
-      const schemaToUse = schema || 'dbo';
+      const schemaToUse = schema || "dbo";
 
-      const request = this.connection.request()
-        .input('schema', sql.VarChar, schemaToUse);
+      const request = this.connection
+        .request()
+        .input("schema", sql.VarChar, schemaToUse);
 
       const query = `
           SELECT TABLE_NAME
@@ -163,7 +180,7 @@ export class SQLServerConnector implements Connector {
 
       const result = await request.query(query);
 
-      return result.recordset.map((row) => row.TABLE_NAME);
+      return result.recordset.map((row: { TABLE_NAME: any }) => row.TABLE_NAME);
     } catch (error) {
       throw new Error(`Failed to get tables: ${(error as Error).message}`);
     }
@@ -171,16 +188,17 @@ export class SQLServerConnector implements Connector {
 
   async tableExists(tableName: string, schema?: string): Promise<boolean> {
     if (!this.connection) {
-      throw new Error('Not connected to SQL Server database');
+      throw new Error("Not connected to SQL Server database");
     }
 
     try {
       // In SQL Server, use 'dbo' as the default schema if none specified
-      const schemaToUse = schema || 'dbo';
+      const schemaToUse = schema || "dbo";
 
-      const request = this.connection.request()
-        .input('tableName', sql.VarChar, tableName)
-        .input('schema', sql.VarChar, schemaToUse);
+      const request = this.connection
+        .request()
+        .input("tableName", sql.VarChar, tableName)
+        .input("schema", sql.VarChar, schemaToUse);
 
       const query = `
           SELECT COUNT(*) as count
@@ -193,22 +211,28 @@ export class SQLServerConnector implements Connector {
 
       return result.recordset[0].count > 0;
     } catch (error) {
-      throw new Error(`Failed to check if table exists: ${(error as Error).message}`);
+      throw new Error(
+        `Failed to check if table exists: ${(error as Error).message}`
+      );
     }
   }
 
-  async getTableIndexes(tableName: string, schema?: string): Promise<TableIndex[]> {
+  async getTableIndexes(
+    tableName: string,
+    schema?: string
+  ): Promise<TableIndex[]> {
     if (!this.connection) {
-      throw new Error('Not connected to SQL Server database');
+      throw new Error("Not connected to SQL Server database");
     }
 
     try {
       // In SQL Server, use 'dbo' as the default schema if none specified
-      const schemaToUse = schema || 'dbo';
+      const schemaToUse = schema || "dbo";
 
-      const request = this.connection.request()
-        .input('tableName', sql.VarChar, tableName)
-        .input('schema', sql.VarChar, schemaToUse);
+      const request = this.connection
+        .request()
+        .input("tableName", sql.VarChar, tableName)
+        .input("schema", sql.VarChar, schemaToUse);
 
       // This gets all indexes including primary keys
       const query = `
@@ -235,11 +259,14 @@ export class SQLServerConnector implements Connector {
       const result = await request.query(query);
 
       // Group by index name to collect all columns for each index
-      const indexMap = new Map<string, {
-        columns: string[],
-        is_unique: boolean,
-        is_primary: boolean
-      }>();
+      const indexMap = new Map<
+        string,
+        {
+          columns: string[];
+          is_unique: boolean;
+          is_primary: boolean;
+        }
+      >();
 
       for (const row of result.recordset) {
         const indexName = row.index_name;
@@ -251,7 +278,7 @@ export class SQLServerConnector implements Connector {
           indexMap.set(indexName, {
             columns: [],
             is_unique: isUnique,
-            is_primary: isPrimary
+            is_primary: isPrimary,
           });
         }
 
@@ -266,28 +293,36 @@ export class SQLServerConnector implements Connector {
           index_name: name,
           column_names: info.columns,
           is_unique: info.is_unique,
-          is_primary: info.is_primary
+          is_primary: info.is_primary,
         });
       });
 
       return indexes;
     } catch (error) {
-      throw new Error(`Failed to get indexes for table ${tableName}: ${(error as Error).message}`);
+      throw new Error(
+        `Failed to get indexes for table ${tableName}: ${
+          (error as Error).message
+        }`
+      );
     }
   }
 
-  async getTableSchema(tableName: string, schema?: string): Promise<TableColumn[]> {
+  async getTableSchema(
+    tableName: string,
+    schema?: string
+  ): Promise<TableColumn[]> {
     if (!this.connection) {
-      throw new Error('Not connected to SQL Server database');
+      throw new Error("Not connected to SQL Server database");
     }
 
     try {
       // In SQL Server, use 'dbo' as the default schema if none specified
-      const schemaToUse = schema || 'dbo';
+      const schemaToUse = schema || "dbo";
 
-      const request = this.connection.request()
-        .input('tableName', sql.VarChar, tableName)
-        .input('schema', sql.VarChar, schemaToUse);
+      const request = this.connection
+        .request()
+        .input("tableName", sql.VarChar, tableName)
+        .input("schema", sql.VarChar, schemaToUse);
 
       const query = `
           SELECT COLUMN_NAME as    column_name,
@@ -304,21 +339,26 @@ export class SQLServerConnector implements Connector {
 
       return result.recordset;
     } catch (error) {
-      throw new Error(`Failed to get schema for table ${tableName}: ${(error as Error).message}`);
+      throw new Error(
+        `Failed to get schema for table ${tableName}: ${
+          (error as Error).message
+        }`
+      );
     }
   }
 
   async getStoredProcedures(schema?: string): Promise<string[]> {
     if (!this.connection) {
-      throw new Error('Not connected to SQL Server database');
+      throw new Error("Not connected to SQL Server database");
     }
 
     try {
       // In SQL Server, use 'dbo' as the default schema if none specified
-      const schemaToUse = schema || 'dbo';
+      const schemaToUse = schema || "dbo";
 
-      const request = this.connection.request()
-        .input('schema', sql.VarChar, schemaToUse);
+      const request = this.connection
+        .request()
+        .input("schema", sql.VarChar, schemaToUse);
 
       const query = `
           SELECT ROUTINE_NAME
@@ -329,24 +369,32 @@ export class SQLServerConnector implements Connector {
       `;
 
       const result = await request.query(query);
-      return result.recordset.map(row => row.ROUTINE_NAME);
+      return result.recordset.map(
+        (row: { ROUTINE_NAME: any }) => row.ROUTINE_NAME
+      );
     } catch (error) {
-      throw new Error(`Failed to get stored procedures: ${(error as Error).message}`);
+      throw new Error(
+        `Failed to get stored procedures: ${(error as Error).message}`
+      );
     }
   }
 
-  async getStoredProcedureDetail(procedureName: string, schema?: string): Promise<StoredProcedure> {
+  async getStoredProcedureDetail(
+    procedureName: string,
+    schema?: string
+  ): Promise<StoredProcedure> {
     if (!this.connection) {
-      throw new Error('Not connected to SQL Server database');
+      throw new Error("Not connected to SQL Server database");
     }
 
     try {
       // In SQL Server, use 'dbo' as the default schema if none specified
-      const schemaToUse = schema || 'dbo';
+      const schemaToUse = schema || "dbo";
 
-      const request = this.connection.request()
-        .input('procedureName', sql.VarChar, procedureName)
-        .input('schema', sql.VarChar, schemaToUse);
+      const request = this.connection
+        .request()
+        .input("procedureName", sql.VarChar, procedureName)
+        .input("schema", sql.VarChar, schemaToUse);
 
       // First, get basic procedure information
       const routineQuery = `
@@ -361,7 +409,9 @@ export class SQLServerConnector implements Connector {
       const routineResult = await request.query(routineQuery);
 
       if (routineResult.recordset.length === 0) {
-        throw new Error(`Stored procedure '${procedureName}' not found in schema '${schemaToUse}'`);
+        throw new Error(
+          `Stored procedure '${procedureName}' not found in schema '${schemaToUse}'`
+        );
       }
 
       const routine = routineResult.recordset[0];
@@ -382,15 +432,24 @@ export class SQLServerConnector implements Connector {
       const parameterResult = await request.query(parameterQuery);
 
       // Format the parameter list
-      let parameterList = '';
+      let parameterList = "";
       if (parameterResult.recordset.length > 0) {
         parameterList = parameterResult.recordset
-          .map(param => {
-            const lengthStr = param.CHARACTER_MAXIMUM_LENGTH > 0 ?
-              `(${param.CHARACTER_MAXIMUM_LENGTH})` : '';
-            return `${param.PARAMETER_NAME} ${param.PARAMETER_MODE} ${param.DATA_TYPE}${lengthStr}`;
-          })
-          .join(', ');
+          .map(
+            (param: {
+              CHARACTER_MAXIMUM_LENGTH: number;
+              PARAMETER_NAME: any;
+              PARAMETER_MODE: any;
+              DATA_TYPE: any;
+            }) => {
+              const lengthStr =
+                param.CHARACTER_MAXIMUM_LENGTH > 0
+                  ? `(${param.CHARACTER_MAXIMUM_LENGTH})`
+                  : "";
+              return `${param.PARAMETER_NAME} ${param.PARAMETER_MODE} ${param.DATA_TYPE}${lengthStr}`;
+            }
+          )
+          .join(", ");
       }
 
       // Get the procedure definition from sys.sql_modules
@@ -412,20 +471,26 @@ export class SQLServerConnector implements Connector {
 
       return {
         procedure_name: routine.procedure_name,
-        procedure_type: routine.ROUTINE_TYPE === 'PROCEDURE' ? 'procedure' : 'function',
-        language: 'sql', // SQL Server procedures are typically in T-SQL
+        procedure_type:
+          routine.ROUTINE_TYPE === "PROCEDURE" ? "procedure" : "function",
+        language: "sql", // SQL Server procedures are typically in T-SQL
         parameter_list: parameterList,
-        return_type: routine.ROUTINE_TYPE === 'FUNCTION' ? routine.return_data_type : undefined,
-        definition: definition
+        return_type:
+          routine.ROUTINE_TYPE === "FUNCTION"
+            ? routine.return_data_type
+            : undefined,
+        definition: definition,
       };
     } catch (error) {
-      throw new Error(`Failed to get stored procedure details: ${(error as Error).message}`);
+      throw new Error(
+        `Failed to get stored procedure details: ${(error as Error).message}`
+      );
     }
   }
 
   async executeQuery(query: string): Promise<QueryResult> {
     if (!this.connection) {
-      throw new Error('Not connected to SQL Server database');
+      throw new Error("Not connected to SQL Server database");
     }
 
     const safetyCheck = this.validateQuery(query);
@@ -437,11 +502,12 @@ export class SQLServerConnector implements Connector {
       const result = await this.connection.request().query(query);
       return {
         rows: result.recordset || [],
-        fields: result.recordset && result.recordset.length > 0
-          ? Object.keys(result.recordset[0]).map(key => ({
-            name: key,
-          }))
-          : [],
+        fields:
+          result.recordset && result.recordset.length > 0
+            ? Object.keys(result.recordset[0]).map((key) => ({
+                name: key,
+              }))
+            : [],
         rowCount: result.rowsAffected[0] || 0,
       };
     } catch (error) {
@@ -452,13 +518,17 @@ export class SQLServerConnector implements Connector {
   validateQuery(query: string): { isValid: boolean; message?: string } {
     // Basic check to prevent non-SELECT queries
     const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery.startsWith('select')) {
+    if (
+      !allowedKeywords.some((keyword: string) =>
+        normalizedQuery.startsWith(keyword)
+      )
+    ) {
       return {
         isValid: false,
-        message: "Only SELECT queries are allowed for security reasons."
+        message: "Only SELECT queries are allowed for security reasons.",
       };
     }
-    return {isValid: true};
+    return { isValid: true };
   }
 }
 
