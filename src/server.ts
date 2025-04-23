@@ -8,7 +8,7 @@ import { fileURLToPath } from "url";
 
 import { ConnectorManager } from "./connectors/manager.js";
 import { ConnectorRegistry } from "./connectors/interface.js";
-import { resolveDSN, resolveTransport, resolvePort, isDemoMode, redactDSN } from "./config/env.js";
+import { resolveDSN, resolveTransport, resolvePort, isDemoMode, redactDSN, isReadOnlyMode } from "./config/env.js";
 import { getSqliteInMemorySetupSql } from "./config/demo-loader.js";
 import { registerResources } from "./resources/index.js";
 import { registerTools } from "./tools/index.js";
@@ -29,8 +29,9 @@ export const SERVER_VERSION = packageJson.version;
 /**
  * Generate ASCII art banner with version information
  */
-export function generateBanner(version: string, isDemo: boolean = false): string {
-  const demoText = isDemo ? " [DEMO MODE]" : "";
+export function generateBanner(version: string, modes: string[] = []): string {
+  // Create a mode string that includes all active modes
+  const modeText = modes.length > 0 ? ` [${modes.join(' | ')}]` : '';
 
   return `
  _____  ____  _   _       _     
@@ -40,7 +41,7 @@ export function generateBanner(version: string, isDemo: boolean = false): string
 | |__| | |_) | | | | |_| | |_) |
 |_____/|____/|_| |_|\\__,_|_.__/ 
                                 
-v${version}${demoText} - Universal Database MCP Server
+v${version}${modeText} - Universal Database MCP Server
 `;
 }
 
@@ -93,7 +94,6 @@ See documentation for more details on configuring database connections.
 
     // If in demo mode, load the employee database
     if (dsnData.isDemo) {
-      console.error("Running in demo mode with sample employee database");
       const initScript = getSqliteInMemorySetupSql();
       await connectorManager.connectWithDSN(dsnData.dsn, initScript);
     } else {
@@ -106,7 +106,28 @@ See documentation for more details on configuring database connections.
     console.error(`Transport source: ${transportData.source}`);
 
     // Print ASCII art banner with version and slogan
-    console.error(generateBanner(SERVER_VERSION, dsnData.isDemo));
+    const readonly = isReadOnlyMode();
+    
+    // Collect active modes
+    const activeModes: string[] = [];
+    const modeDescriptions: string[] = [];
+    
+    if (dsnData.isDemo) {
+      activeModes.push("DEMO");
+      modeDescriptions.push("using sample employee database");
+    }
+    
+    if (readonly) {
+      activeModes.push("READ-ONLY");
+      modeDescriptions.push("only read only queries allowed");
+    }
+    
+    // Output mode information
+    if (activeModes.length > 0) {
+      console.error(`Running in ${activeModes.join(' and ')} mode - ${modeDescriptions.join(', ')}`);
+    }
+    
+    console.error(generateBanner(SERVER_VERSION, activeModes));
 
     // Set up transport based on type
     if (transportData.type === "sse") {
