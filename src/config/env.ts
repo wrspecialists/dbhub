@@ -81,6 +81,27 @@ export function isDemoMode(): boolean {
 }
 
 /**
+ * Check if readonly mode is enabled from command line args or environment
+ * Returns true if --readonly flag is provided
+ */
+export function isReadOnlyMode(): boolean {
+  const args = parseCommandLineArgs();
+  
+  // Check command line args first
+  if (args.readonly !== undefined) {
+    return args.readonly === "true";
+  }
+  
+  // Check environment variable
+  if (process.env.READONLY !== undefined) {
+    return process.env.READONLY === "true";
+  }
+  
+  // Default to false
+  return false;
+}
+
+/**
  * Resolve DSN from command line args, environment variables, or .env files
  * Returns the DSN and its source, or null if not found
  */

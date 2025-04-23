@@ -133,9 +133,6 @@ export interface Connector {
 
   /** Execute a query */
   executeQuery(query: string): Promise<QueryResult>;
-
-  /** Validate query for safety (preventing destructive operations) */
-  validateQuery(query: string): { isValid: boolean; message?: string };
 }
 
 /**

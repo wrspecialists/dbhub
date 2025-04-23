@@ -1,11 +1,29 @@
 import { z } from "zod";
 import { ConnectorManager } from "../connectors/manager.js";
 import { createToolSuccessResponse, createToolErrorResponse } from "../utils/response-formatter.js";
+import { isReadOnlyMode } from "../config/env.js";
+import { allowedKeywords } from "../utils/allowed-keywords.js";
 
 // Schema for execute_sql tool
 export const executeSqlSchema = {
   query: z.string().describe("SQL query to execute (SELECT only)"),
 };
+
+/**
+ * Check if a query is read-only based on its first keyword
+ * @param query The SQL query to check
+ * @param connectorType The database type to check against
+ * @returns True if the query is read-only (starts with allowed keywords)
+ */
+function isReadOnlyQuery(query: string, connectorType: string): boolean {
+  const normalizedQuery = query.trim().toLowerCase();
+  const firstWord = normalizedQuery.split(/\s+/)[0];
+  
+  // Get the appropriate allowed keywords list for this database type
+  const keywordList = allowedKeywords[connectorType] || allowedKeywords.default || [];
+  
+  return keywordList.includes(firstWord);
+}
 
 /**
  * execute_sql tool handler
@@ -15,13 +33,11 @@ export async function executeSqlToolHandler({ query }: { query: string }, _extra
   const connector = ConnectorManager.getCurrentConnector();
 
   try {
-    // Validate the query before execution
-    const validationResult = connector.validateQuery(query);
-
-    if (!validationResult.isValid) {
+    // Check if query is allowed based on readonly mode
+    if (isReadOnlyMode() && !isReadOnlyQuery(query, connector.id)) {
       return createToolErrorResponse(
-        validationResult.message ?? "Unknown validation error",
-        "VALIDATION_ERROR"
+        `Read-only mode is enabled. Only the following SQL operations are allowed: ${allowedKeywords[connector.id]?.join(", ") || "none"}`,
+        "READONLY_VIOLATION"
       );
     }
 

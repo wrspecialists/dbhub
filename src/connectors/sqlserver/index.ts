@@ -9,7 +9,6 @@ import {
   StoredProcedure,
 } from "../interface.js";
 import { DefaultAzureCredential } from "@azure/identity";
-import { allowedKeywords } from "../../utils/allowed-keywords.js";
 
 /**
  * SQL Server DSN parser
@@ -451,11 +450,6 @@ export class SQLServerConnector implements Connector {
       throw new Error("Not connected to SQL Server database");
     }
 
-    const safetyCheck = this.validateQuery(query);
-    if (!safetyCheck.isValid) {
-      throw new Error(safetyCheck.message || "Query validation failed");
-    }
-
     try {
       const result = await this.connection.request().query(query);
       return {
@@ -471,18 +465,6 @@ export class SQLServerConnector implements Connector {
     } catch (error) {
       throw new Error(`Failed to execute query: ${(error as Error).message}`);
     }
-  }
-
-  validateQuery(query: string): { isValid: boolean; message?: string } {
-    // Basic check to prevent non-SELECT queries
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!allowedKeywords.sqlserver.some((keyword: string) => normalizedQuery.startsWith(keyword))) {
-      return {
-        isValid: false,
-        message: "Only SELECT queries are allowed for security reasons.",
-      };
-    }
-    return { isValid: true };
   }
 }
 

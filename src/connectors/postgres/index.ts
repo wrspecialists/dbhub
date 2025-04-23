@@ -9,7 +9,6 @@ import {
   TableIndex,
   StoredProcedure,
 } from "../interface.js";
-import { allowedKeywords } from "../../utils/allowed-keywords.js";
 
 /**
  * PostgreSQL DSN Parser
@@ -383,29 +382,12 @@ export class PostgresConnector implements Connector {
       throw new Error("Not connected to database");
     }
 
-    const safetyCheck = this.validateQuery(query);
-    if (!safetyCheck.isValid) {
-      throw new Error(safetyCheck.message || "Query validation failed");
-    }
-
     const client = await this.pool.connect();
     try {
       return await client.query(query);
     } finally {
       client.release();
     }
-  }
-
-  validateQuery(query: string): { isValid: boolean; message?: string } {
-    // Basic check to prevent non-SELECT queries
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!allowedKeywords.postgresql.some((keyword) => normalizedQuery.startsWith(keyword))) {
-      return {
-        isValid: false,
-        message: "Only SELECT queries are allowed for security reasons.",
-      };
-    }
-    return { isValid: true };
   }
 }
 

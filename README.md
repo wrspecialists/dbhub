@@ -151,6 +151,19 @@ npx @bytebase/dbhub --transport sse --port 8080 --demo
 
 ## Usage
 
+### Read-only Mode
+
+You can run DBHub in read-only mode, which restricts SQL query execution to read-only operations:
+
+```bash
+# Enable read-only mode
+npx @bytebase/dbhub --readonly --dsn "postgres://user:password@localhost:5432/dbname"
+```
+
+In read-only mode, only [readonly SQL operations](https://github.com/bytebase/dbhub/blob/main/src/utils/allowed-keywords.ts) are allowed.
+
+This provides an additional layer of security when connecting to production databases.
+
 ### Configure your database connection
 
 You can use DBHub in demo mode with a sample employee database for testing:
@@ -186,13 +199,13 @@ For real databases, a Database Source Name (DSN) is required. You can provide th
 
 DBHub supports the following database connection string formats:
 
-| Database   | DSN Format                                               | Example                                                          |
-| ---------- | -------------------------------------------------------- | ---------------------------------------------------------------- |
-| MySQL      | `mysql://[user]:[password]@[host]:[port]/[database]`     | `mysql://user:password@localhost:3306/dbname`                    |
-| MariaDB    | `mariadb://[user]:[password]@[host]:[port]/[database]`   | `mariadb://user:password@localhost:3306/dbname`                  |
-| PostgreSQL | `postgres://[user]:[password]@[host]:[port]/[database]`  | `postgres://user:password@localhost:5432/dbname?sslmode=disable` |
-| SQL Server | `sqlserver://[user]:[password]@[host]:[port]/[database]` | `sqlserver://user:password@localhost:1433/dbname`                |
-| SQLite     | `sqlite:///[path/to/file]` or `sqlite::memory:`          | `sqlite:///path/to/database.db`, `sqlite:C:/Users/YourName/data/database.db (windows)`  or `sqlite::memory:`             |
+| Database   | DSN Format                                               | Example                                                                                                     |
+| ---------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| MySQL      | `mysql://[user]:[password]@[host]:[port]/[database]`     | `mysql://user:password@localhost:3306/dbname`                                                               |
+| MariaDB    | `mariadb://[user]:[password]@[host]:[port]/[database]`   | `mariadb://user:password@localhost:3306/dbname`                                                             |
+| PostgreSQL | `postgres://[user]:[password]@[host]:[port]/[database]`  | `postgres://user:password@localhost:5432/dbname?sslmode=disable`                                            |
+| SQL Server | `sqlserver://[user]:[password]@[host]:[port]/[database]` | `sqlserver://user:password@localhost:1433/dbname`                                                           |
+| SQLite     | `sqlite:///[path/to/file]` or `sqlite::memory:`          | `sqlite:///path/to/database.db`, `sqlite:C:/Users/YourName/data/database.db (windows)` or `sqlite::memory:` |
 
 #### SQL Server
 
@@ -223,6 +236,7 @@ Extra query parameters:
 | dsn       | Database connection string                                      | Required if not in demo mode |
 | transport | Transport mode: `stdio` or `sse`                                | `stdio`                      |
 | port      | HTTP server port (only applicable when using `--transport=sse`) | `8080`                       |
+| readonly  | Restrict SQL execution to read-only operations                  | `false`                      |
 
 The demo mode uses an in-memory SQLite database loaded with the [sample employee database](https://github.com/bytebase/dbhub/tree/main/resources/employee-sqlite) that includes tables for employees, departments, titles, salaries, department employees, and department managers. The sample database includes SQL scripts for table creation, data loading, and testing.
 

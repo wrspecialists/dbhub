@@ -7,7 +7,6 @@
  * 2. Or set DB_CONNECTOR_TYPE=sqlite for default in-memory database
  */
 
-import { allowedKeywords } from "../../utils/allowed-keywords.js";
 import {
   Connector,
   ConnectorRegistry,
@@ -320,30 +319,12 @@ export class SQLiteConnector implements Connector {
       throw new Error("Not connected to SQLite database");
     }
 
-    // Validate query for safety
-    const safetyCheck = this.validateQuery(query);
-    if (!safetyCheck.isValid) {
-      throw new Error(safetyCheck.message || "Query validation failed");
-    }
-
     try {
       const rows = this.db.prepare(query).all();
       return { rows };
     } catch (error) {
       throw error;
     }
-  }
-
-  validateQuery(query: string): { isValid: boolean; message?: string } {
-    // Basic check to prevent non-SELECT queries
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!allowedKeywords.sqlite.some((keyword) => normalizedQuery.startsWith(keyword))) {
-      return {
-        isValid: false,
-        message: "Only SELECT queries are allowed for security reasons.",
-      };
-    }
-    return { isValid: true };
   }
 }
 

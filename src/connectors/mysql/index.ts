@@ -8,7 +8,6 @@ import {
   TableIndex,
   StoredProcedure,
 } from "../interface.js";
-import { allowedKeywords } from "../../utils/allowed-keywords.js";
 
 /**
  * MySQL DSN Parser
@@ -451,11 +450,6 @@ export class MySQLConnector implements Connector {
       throw new Error("Not connected to database");
     }
 
-    const safetyCheck = this.validateQuery(query);
-    if (!safetyCheck.isValid) {
-      throw new Error(safetyCheck.message || "Query validation failed");
-    }
-
     try {
       const [rows, fields] = (await this.pool.query(query)) as [any[], any];
       return { rows, fields };
@@ -463,18 +457,6 @@ export class MySQLConnector implements Connector {
       console.error("Error executing query:", error);
       throw error;
     }
-  }
-
-  validateQuery(query: string): { isValid: boolean; message?: string } {
-    // Basic check to prevent non-SELECT queries
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!allowedKeywords.mysql.some((keyword) => normalizedQuery.startsWith(keyword))) {
-      return {
-        isValid: false,
-        message: "Only SELECT queries are allowed for security reasons.",
-      };
-    }
-    return { isValid: true };
   }
 }
 
