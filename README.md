@@ -49,7 +49,7 @@ https://demo.dbhub.ai/sse connects a [sample employee database](https://github.c
 
 | Tool            | Command Name      | PostgreSQL | MySQL | MariaDB | SQL Server | SQLite |
 | --------------- | ----------------- | :--------: | :---: | :-----: | :--------: | ------ |
-| Execute Query   | `run_query`       |     ✅     |  ✅   |   ✅    |     ✅     | ✅     |
+| Execute SQL     | `execute_sql`     |     ✅     |  ✅   |   ✅    |     ✅     | ✅     |
 | List Connectors | `list_connectors` |     ✅     |  ✅   |   ✅    |     ✅     | ✅     |
 
 ### Prompt Capabilities

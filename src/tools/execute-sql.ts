@@ -2,16 +2,16 @@ import { z } from "zod";
 import { ConnectorManager } from "../connectors/manager.js";
 import { createToolSuccessResponse, createToolErrorResponse } from "../utils/response-formatter.js";
 
-// Schema for run_query tool
-export const runQuerySchema = {
+// Schema for execute_sql tool
+export const executeSqlSchema = {
   query: z.string().describe("SQL query to execute (SELECT only)"),
 };
 
 /**
- * run_query tool handler
+ * execute_sql tool handler
  * Executes a SQL query and returns the results
  */
-export async function runQueryToolHandler({ query }: { query: string }, _extra: any) {
+export async function executeSqlToolHandler({ query }: { query: string }, _extra: any) {
   const connector = ConnectorManager.getCurrentConnector();
 
   try {

@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { runQueryToolHandler, runQuerySchema } from "./run-query.js";
+import { executeSqlToolHandler, executeSqlSchema } from "./execute-sql.js";
 import { listConnectorsToolHandler } from "./list-connectors.js";
 
 /**
@@ -8,10 +8,10 @@ import { listConnectorsToolHandler } from "./list-connectors.js";
 export function registerTools(server: McpServer): void {
   // Tool to run a SQL query (read-only for safety)
   server.tool(
-    "run_query",
-    "Run a SQL query on the current database",
-    runQuerySchema,
-    runQueryToolHandler
+    "execute_sql",
+    "Execute a SQL query on the current database",
+    executeSqlSchema,
+    executeSqlToolHandler
   );
 
   // Tool to list available database connectors
