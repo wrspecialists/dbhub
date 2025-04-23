@@ -36,7 +36,7 @@ export class SQLServerDSNParser implements DSNParser {
     const options: Record<string, any> = {};
     for (const [key, value] of url.searchParams.entries()) {
       if (key === "encrypt") {
-        options.encrypt = value;
+        options.encrypt = value === "true" ? true : value === "false" ? false : value;
       } else if (key === "trustServerCertificate") {
         options.trustServerCertificate = value === "true";
       } else if (key === "connectTimeout") {
