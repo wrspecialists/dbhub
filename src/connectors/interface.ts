@@ -23,7 +23,7 @@ export interface TableIndex {
 
 export interface StoredProcedure {
   procedure_name: string;
-  procedure_type: 'procedure' | 'function';
+  procedure_type: "procedure" | "function";
   language: string;
   parameter_list: string;
   return_type?: string;
@@ -44,12 +44,12 @@ export interface DSNParser {
    * - SQLite: "sqlite:///path/to/database.db" or "sqlite::memory:"
    */
   parse(dsn: string): Promise<any>;
-  
+
   /**
    * Generate a sample DSN string for this connector type
    */
   getSampleDSN(): string;
-  
+
   /**
    * Check if a DSN is valid for this connector
    */
@@ -59,26 +59,26 @@ export interface DSNParser {
 export interface Connector {
   /** A unique identifier for the connector */
   id: string;
-  
+
   /** Human-readable name of the connector */
   name: string;
-  
+
   /** DSN parser for this connector */
   dsnParser: DSNParser;
-  
+
   /** Connect to the database using DSN, with optional init script */
   connect(dsn: string, initScript?: string): Promise<void>;
-  
+
   /** Close the connection */
   disconnect(): Promise<void>;
-  
-  /** 
-   * Get all schemas in the database 
+
+  /**
+   * Get all schemas in the database
    * @returns Promise with array of schema names
    */
   getSchemas(): Promise<string[]>;
-  
-  /** 
+
+  /**
    * Get all tables in the database or in a specific schema
    * @param schema Optional schema name. If not provided, implementation should use the default schema:
    *   - PostgreSQL: 'public' schema
@@ -88,8 +88,8 @@ export interface Connector {
    * @returns Promise with array of table names
    */
   getTables(schema?: string): Promise<string[]>;
-  
-  /** 
+
+  /**
    * Get schema information for a specific table
    * @param tableName The name of the table to get schema information for
    * @param schema Optional schema name. If not provided, implementation should use the default schema
@@ -97,8 +97,8 @@ export interface Connector {
    * @returns Promise with array of column information
    */
   getTableSchema(tableName: string, schema?: string): Promise<TableColumn[]>;
-  
-  /** 
+
+  /**
    * Check if a table exists
    * @param tableName The name of the table to check
    * @param schema Optional schema name. If not provided, implementation should use the default schema
@@ -106,8 +106,8 @@ export interface Connector {
    * @returns Promise with boolean indicating if table exists
    */
   tableExists(tableName: string, schema?: string): Promise<boolean>;
-  
-  /** 
+
+  /**
    * Get indexes for a specific table
    * @param tableName The name of the table to get indexes for
    * @param schema Optional schema name. If not provided, implementation should use the default schema
@@ -115,25 +115,25 @@ export interface Connector {
    * @returns Promise with array of index information
    */
   getTableIndexes(tableName: string, schema?: string): Promise<TableIndex[]>;
-  
-  /** 
+
+  /**
    * Get stored procedures/functions in the database or in a specific schema
    * @param schema Optional schema name. If not provided, implementation should use the default schema
    * @returns Promise with array of stored procedure/function names
    */
   getStoredProcedures(schema?: string): Promise<string[]>;
-  
-  /** 
+
+  /**
    * Get details for a specific stored procedure/function
    * @param procedureName The name of the procedure/function to get details for
    * @param schema Optional schema name. If not provided, implementation should use the default schema
    * @returns Promise with stored procedure details
    */
   getStoredProcedureDetail(procedureName: string, schema?: string): Promise<StoredProcedure>;
-  
+
   /** Execute a query */
   executeQuery(query: string): Promise<QueryResult>;
-  
+
   /** Validate query for safety (preventing destructive operations) */
   validateQuery(query: string): { isValid: boolean; message?: string };
 }
@@ -177,7 +177,7 @@ export class ConnectorRegistry {
   static getAvailableConnectors(): string[] {
     return Array.from(ConnectorRegistry.connectors.keys());
   }
-  
+
   /**
    * Get sample DSN for a specific connector
    */
@@ -186,7 +186,7 @@ export class ConnectorRegistry {
     if (!connector) return null;
     return connector.dsnParser.getSampleDSN();
   }
-  
+
   /**
    * Get all available sample DSNs
    */

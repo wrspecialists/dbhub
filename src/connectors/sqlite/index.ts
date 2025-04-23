@@ -7,7 +7,7 @@
  * 2. Or set DB_CONNECTOR_TYPE=sqlite for default in-memory database
  */
 
-import { allowedKeywords } from '../../utils/allowed-keywords.js';
+import { allowedKeywords } from "../../utils/allowed-keywords.js";
 import {
   Connector,
   ConnectorRegistry,
@@ -16,8 +16,8 @@ import {
   TableColumn,
   TableIndex,
   StoredProcedure,
-} from '../interface.js';
-import Database from 'better-sqlite3';
+} from "../interface.js";
+import Database from "better-sqlite3";
 
 /**
  * SQLite DSN Parser
@@ -38,13 +38,13 @@ class SQLiteDSNParser implements DSNParser {
       let dbPath: string;
 
       // Handle in-memory database
-      if (url.hostname === '' && url.pathname === ':memory:') {
-        dbPath = ':memory:';
+      if (url.hostname === "" && url.pathname === ":memory:") {
+        dbPath = ":memory:";
       }
       // Handle file paths
       else {
         // Get the path part, handling both relative and absolute paths
-        if (url.pathname.startsWith('//')) {
+        if (url.pathname.startsWith("//")) {
           // Absolute path: sqlite:///path/to/db.sqlite
           dbPath = url.pathname.substring(2); // Remove leading //
         } else {
@@ -55,18 +55,20 @@ class SQLiteDSNParser implements DSNParser {
 
       return { dbPath };
     } catch (error) {
-      throw new Error(`Failed to parse SQLite DSN: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to parse SQLite DSN: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
   getSampleDSN(): string {
-    return 'sqlite:///path/to/database.db';
+    return "sqlite:///path/to/database.db";
   }
 
   isValidDSN(dsn: string): boolean {
     try {
       const url = new URL(dsn);
-      return url.protocol === 'sqlite:';
+      return url.protocol === "sqlite:";
     } catch (error) {
       return false;
     }
@@ -86,12 +88,12 @@ interface SQLiteTableNameRow {
 }
 
 export class SQLiteConnector implements Connector {
-  id = 'sqlite';
-  name = 'SQLite';
+  id = "sqlite";
+  name = "SQLite";
   dsnParser = new SQLiteDSNParser();
 
   private db: Database.Database | null = null;
-  private dbPath: string = ':memory:'; // Default to in-memory database
+  private dbPath: string = ":memory:"; // Default to in-memory database
 
   async connect(dsn: string, initScript?: string): Promise<void> {
     const config = await this.dsnParser.parse(dsn);
@@ -99,15 +101,15 @@ export class SQLiteConnector implements Connector {
 
     try {
       this.db = new Database(this.dbPath);
-      console.error('Successfully connected to SQLite database');
+      console.error("Successfully connected to SQLite database");
 
       // If an initialization script is provided, run it
       if (initScript) {
         this.db.exec(initScript);
-        console.error('Successfully initialized database with script');
+        console.error("Successfully initialized database with script");
       }
     } catch (error) {
-      console.error('Failed to connect to SQLite database:', error);
+      console.error("Failed to connect to SQLite database:", error);
       throw error;
     }
   }
@@ -126,19 +128,19 @@ export class SQLiteConnector implements Connector {
 
   async getSchemas(): Promise<string[]> {
     if (!this.db) {
-      throw new Error('Not connected to SQLite database');
+      throw new Error("Not connected to SQLite database");
     }
 
     // SQLite doesn't have the concept of schemas like PostgreSQL or MySQL
     // It has a concept of "attached databases" where each database has a name
     // The default database is called 'main', and others can be attached with names
     // We return the database name or 'main' for in-memory databases as the "schema"
-    return [this.dbPath === ':memory:' ? 'main' : this.dbPath];
+    return [this.dbPath === ":memory:" ? "main" : this.dbPath];
   }
 
   async getTables(schema?: string): Promise<string[]> {
     if (!this.db) {
-      throw new Error('Not connected to SQLite database');
+      throw new Error("Not connected to SQLite database");
     }
 
     // In SQLite, schema parameter is ignored since SQLite doesn't have schemas like PostgreSQL
@@ -164,7 +166,7 @@ export class SQLiteConnector implements Connector {
 
   async tableExists(tableName: string, schema?: string): Promise<boolean> {
     if (!this.db) {
-      throw new Error('Not connected to SQLite database');
+      throw new Error("Not connected to SQLite database");
     }
 
     // In SQLite, schema parameter is ignored since there's only one schema per database file
@@ -187,7 +189,7 @@ export class SQLiteConnector implements Connector {
 
   async getTableIndexes(tableName: string, schema?: string): Promise<TableIndex[]> {
     if (!this.db) {
-      throw new Error('Not connected to SQLite database');
+      throw new Error("Not connected to SQLite database");
     }
 
     // In SQLite, schema parameter is ignored (no schema concept)
@@ -210,7 +212,9 @@ export class SQLiteConnector implements Connector {
         .all(tableName) as { index_name: string; is_unique: number }[];
 
       // Get the primary key info
-      const tableInfo = this.db.prepare(`PRAGMA table_info(${tableName})`).all() as SQLiteTableInfo[];
+      const tableInfo = this.db
+        .prepare(`PRAGMA table_info(${tableName})`)
+        .all() as SQLiteTableInfo[];
 
       // Find primary key columns
       const pkColumns = tableInfo.filter((col) => col.pk > 0).map((col) => col.name);
@@ -220,7 +224,9 @@ export class SQLiteConnector implements Connector {
       // Add regular indexes
       for (const indexInfo of indexInfoRows) {
         // Get the columns for this index
-        const indexDetailRows = this.db.prepare(`PRAGMA index_info(${indexInfo.index_name})`).all() as {
+        const indexDetailRows = this.db
+          .prepare(`PRAGMA index_info(${indexInfo.index_name})`)
+          .all() as {
           name: string;
         }[];
         const columnNames = indexDetailRows.map((row) => row.name);
@@ -236,7 +242,7 @@ export class SQLiteConnector implements Connector {
       // Add primary key if it exists
       if (pkColumns.length > 0) {
         results.push({
-          index_name: 'PRIMARY',
+          index_name: "PRIMARY",
           column_names: pkColumns,
           is_unique: true,
           is_primary: true,
@@ -251,7 +257,7 @@ export class SQLiteConnector implements Connector {
 
   async getTableSchema(tableName: string, schema?: string): Promise<TableColumn[]> {
     if (!this.db) {
-      throw new Error('Not connected to SQLite database');
+      throw new Error("Not connected to SQLite database");
     }
 
     // In SQLite, schema parameter is ignored for the following reasons:
@@ -265,7 +271,7 @@ export class SQLiteConnector implements Connector {
       const columns = rows.map((row) => ({
         column_name: row.name,
         data_type: row.type,
-        is_nullable: row.notnull === 0 ? 'YES' : 'NO', // In SQLite, 0 means nullable
+        is_nullable: row.notnull === 0 ? "YES" : "NO", // In SQLite, 0 means nullable
         column_default: row.dflt_value,
       }));
 
@@ -277,7 +283,7 @@ export class SQLiteConnector implements Connector {
 
   async getStoredProcedures(schema?: string): Promise<string[]> {
     if (!this.db) {
-      throw new Error('Not connected to SQLite database');
+      throw new Error("Not connected to SQLite database");
     }
 
     // SQLite doesn't have built-in stored procedures like other databases.
@@ -295,7 +301,7 @@ export class SQLiteConnector implements Connector {
 
   async getStoredProcedureDetail(procedureName: string, schema?: string): Promise<StoredProcedure> {
     if (!this.db) {
-      throw new Error('Not connected to SQLite database');
+      throw new Error("Not connected to SQLite database");
     }
 
     // SQLite doesn't have true stored procedures:
@@ -305,19 +311,19 @@ export class SQLiteConnector implements Connector {
 
     // Throw an error since SQLite doesn't support stored procedures
     throw new Error(
-      'SQLite does not support stored procedures. Functions are defined programmatically through the SQLite API, not stored in the database.'
+      "SQLite does not support stored procedures. Functions are defined programmatically through the SQLite API, not stored in the database."
     );
   }
 
   async executeQuery(query: string): Promise<QueryResult> {
     if (!this.db) {
-      throw new Error('Not connected to SQLite database');
+      throw new Error("Not connected to SQLite database");
     }
 
     // Validate query for safety
     const safetyCheck = this.validateQuery(query);
     if (!safetyCheck.isValid) {
-      throw new Error(safetyCheck.message || 'Query validation failed');
+      throw new Error(safetyCheck.message || "Query validation failed");
     }
 
     try {
@@ -334,7 +340,7 @@ export class SQLiteConnector implements Connector {
     if (!allowedKeywords.some((keyword) => normalizedQuery.startsWith(keyword))) {
       return {
         isValid: false,
-        message: 'Only SELECT queries are allowed for security reasons.',
+        message: "Only SELECT queries are allowed for security reasons.",
       };
     }
     return { isValid: true };

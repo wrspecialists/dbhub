@@ -3,4 +3,4 @@
  * Not only SELECT queries are allowed,
  * but also other queries that are not destructive
  */
-export const allowedKeywords = ['select', 'with', 'show', 'describe', 'explain', 'analyze', 'desc'];
+export const allowedKeywords = ["select", "with", "show", "describe", "explain", "analyze", "desc"];

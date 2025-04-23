@@ -1,5 +1,8 @@
-import { ConnectorManager } from '../connectors/manager.js';
-import { createResourceSuccessResponse, createResourceErrorResponse } from '../utils/response-formatter.js';
+import { ConnectorManager } from "../connectors/manager.js";
+import {
+  createResourceSuccessResponse,
+  createResourceErrorResponse,
+} from "../utils/response-formatter.js";
 
 /**
  * Stored procedures/functions resource handler
@@ -7,12 +10,15 @@ import { createResourceSuccessResponse, createResourceErrorResponse } from '../u
  */
 export async function proceduresResourceHandler(uri: URL, variables: any, _extra: any) {
   const connector = ConnectorManager.getCurrentConnector();
-  
+
   // Extract the schema name from URL variables if present
-  const schemaName = variables && variables.schemaName ? 
-    (Array.isArray(variables.schemaName) ? variables.schemaName[0] : variables.schemaName) :
-    undefined;
-  
+  const schemaName =
+    variables && variables.schemaName
+      ? Array.isArray(variables.schemaName)
+        ? variables.schemaName[0]
+        : variables.schemaName
+      : undefined;
+
   try {
     // If a schema name was provided, verify that it exists
     if (schemaName) {
@@ -25,20 +31,19 @@ export async function proceduresResourceHandler(uri: URL, variables: any, _extra
         );
       }
     }
-    
+
     // Get stored procedures with optional schema filter
     const procedureNames = await connector.getStoredProcedures(schemaName);
-    
+
     // Prepare response data
     const responseData = {
       procedures: procedureNames,
       count: procedureNames.length,
-      schema: schemaName
+      schema: schemaName,
     };
-    
+
     // Use the utility to create a standardized response
     return createResourceSuccessResponse(uri.href, responseData);
-    
   } catch (error) {
     return createResourceErrorResponse(
       uri.href,
@@ -54,25 +59,27 @@ export async function proceduresResourceHandler(uri: URL, variables: any, _extra
  */
 export async function procedureDetailResourceHandler(uri: URL, variables: any, _extra: any) {
   const connector = ConnectorManager.getCurrentConnector();
-  
+
   // Extract parameters from URL variables
-  const schemaName = variables && variables.schemaName ? 
-    (Array.isArray(variables.schemaName) ? variables.schemaName[0] : variables.schemaName) :
-    undefined;
-  
-  const procedureName = variables && variables.procedureName ? 
-    (Array.isArray(variables.procedureName) ? variables.procedureName[0] : variables.procedureName) :
-    undefined;
-  
+  const schemaName =
+    variables && variables.schemaName
+      ? Array.isArray(variables.schemaName)
+        ? variables.schemaName[0]
+        : variables.schemaName
+      : undefined;
+
+  const procedureName =
+    variables && variables.procedureName
+      ? Array.isArray(variables.procedureName)
+        ? variables.procedureName[0]
+        : variables.procedureName
+      : undefined;
+
   // Validate required parameters
   if (!procedureName) {
-    return createResourceErrorResponse(
-      uri.href,
-      'Procedure name is required',
-      "MISSING_PARAMETER"
-    );
+    return createResourceErrorResponse(uri.href, "Procedure name is required", "MISSING_PARAMETER");
   }
-  
+
   try {
     // If a schema name was provided, verify that it exists
     if (schemaName) {
@@ -85,10 +92,10 @@ export async function procedureDetailResourceHandler(uri: URL, variables: any, _
         );
       }
     }
-    
+
     // Get procedure details
     const procedureDetails = await connector.getStoredProcedureDetail(procedureName, schemaName);
-    
+
     // Prepare response data
     const responseData = {
       procedureName: procedureDetails.procedure_name,
@@ -97,12 +104,11 @@ export async function procedureDetailResourceHandler(uri: URL, variables: any, _
       parameters: procedureDetails.parameter_list,
       returnType: procedureDetails.return_type,
       definition: procedureDetails.definition,
-      schema: schemaName
+      schema: schemaName,
     };
-    
+
     // Use the utility to create a standardized response
     return createResourceSuccessResponse(uri.href, responseData);
-    
   } catch (error) {
     return createResourceErrorResponse(
       uri.href,

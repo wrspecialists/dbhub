@@ -1,4 +1,4 @@
-import { Connector, ConnectorRegistry } from './interface.js';
+import { Connector, ConnectorRegistry } from "./interface.js";
 
 // Singleton instance for global access
 let managerInstance: ConnectorManager | null = null;
@@ -22,13 +22,13 @@ export class ConnectorManager {
   async connectWithDSN(dsn: string, initScript?: string): Promise<void> {
     // First try to find a connector that can handle this DSN
     let connector = ConnectorRegistry.getConnectorForDSN(dsn);
-    
+
     if (!connector) {
       throw new Error(`No connector found that can handle the DSN: ${dsn}`);
     }
-    
+
     this.activeConnector = connector;
-    
+
     // Connect to the database
     await this.activeConnector.connect(dsn, initScript);
     this.connected = true;
@@ -40,16 +40,16 @@ export class ConnectorManager {
   async connectWithType(connectorType: string, dsn?: string): Promise<void> {
     // Get the connector from the registry
     const connector = ConnectorRegistry.getConnector(connectorType);
-    
+
     if (!connector) {
       throw new Error(`Connector "${connectorType}" not found`);
     }
-    
+
     this.activeConnector = connector;
-    
+
     // Use provided DSN or get sample DSN
     const connectionString = dsn || connector.dsnParser.getSampleDSN();
-    
+
     // Connect to the database
     await this.activeConnector.connect(connectionString);
     this.connected = true;
@@ -70,7 +70,7 @@ export class ConnectorManager {
    */
   getConnector(): Connector {
     if (!this.activeConnector) {
-      throw new Error('No active connector. Call connectWithDSN() or connectWithType() first.');
+      throw new Error("No active connector. Call connectWithDSN() or connectWithType() first.");
     }
     return this.activeConnector;
   }
@@ -88,21 +88,21 @@ export class ConnectorManager {
   static getAvailableConnectors(): string[] {
     return ConnectorRegistry.getAvailableConnectors();
   }
-  
+
   /**
    * Get sample DSNs for all available connectors
    */
   static getAllSampleDSNs(): { [connectorId: string]: string } {
     return ConnectorRegistry.getAllSampleDSNs();
   }
-  
+
   /**
    * Get the current active connector instance
    * This is used by resource and tool handlers
    */
   static getCurrentConnector(): Connector {
     if (!managerInstance) {
-      throw new Error('ConnectorManager not initialized');
+      throw new Error("ConnectorManager not initialized");
     }
     return managerInstance.getConnector();
   }

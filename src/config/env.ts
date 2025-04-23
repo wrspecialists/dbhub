@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 
 // Create __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -12,25 +12,25 @@ export function parseCommandLineArgs() {
   // Check if any args start with '--' (the way tsx passes them)
   const args = process.argv.slice(2);
   const parsedManually: Record<string, string> = {};
-  
+
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    if (arg.startsWith('--')) {
-      const [key, value] = arg.substring(2).split('=');
+    if (arg.startsWith("--")) {
+      const [key, value] = arg.substring(2).split("=");
       if (value) {
         // Handle --key=value format
         parsedManually[key] = value;
-      } else if (i + 1 < args.length && !args[i + 1].startsWith('--')) {
+      } else if (i + 1 < args.length && !args[i + 1].startsWith("--")) {
         // Handle --key value format
         parsedManually[key] = args[i + 1];
         i++; // Skip the next argument as it's the value
       } else {
         // Handle --key format (boolean flag)
-        parsedManually[key] = 'true';
+        parsedManually[key] = "true";
       }
     }
   }
-  
+
   // Just use the manually parsed args - removed parseArgs dependency for Node.js <18.3.0 compatibility
   return parsedManually;
 }
@@ -41,19 +41,19 @@ export function parseCommandLineArgs() {
  */
 export function loadEnvFiles(): string | null {
   // Determine if we're in development or production mode
-  const isDevelopment = process.env.NODE_ENV === 'development' || process.argv[1]?.includes('tsx');
+  const isDevelopment = process.env.NODE_ENV === "development" || process.argv[1]?.includes("tsx");
 
   // Select environment file names based on environment
-  const envFileNames = isDevelopment 
-    ? ['.env.local', '.env'] // In development, try .env.local first, then .env
-    : ['.env']; // In production, only look for .env
+  const envFileNames = isDevelopment
+    ? [".env.local", ".env"] // In development, try .env.local first, then .env
+    : [".env"]; // In production, only look for .env
 
   // Build paths to check for environment files
   const envPaths = [];
   for (const fileName of envFileNames) {
     envPaths.push(
       fileName, // Current working directory
-      path.join(__dirname, '..', '..', fileName), // Two levels up (src/config -> src -> root)
+      path.join(__dirname, "..", "..", fileName), // Two levels up (src/config -> src -> root)
       path.join(process.cwd(), fileName) // Explicit current working directory
     );
   }
@@ -67,7 +67,7 @@ export function loadEnvFiles(): string | null {
       return path.basename(envPath);
     }
   }
-  
+
   return null;
 }
 
@@ -77,7 +77,7 @@ export function loadEnvFiles(): string | null {
  */
 export function isDemoMode(): boolean {
   const args = parseCommandLineArgs();
-  return args.demo === 'true';
+  return args.demo === "true";
 }
 
 /**
@@ -87,33 +87,33 @@ export function isDemoMode(): boolean {
 export function resolveDSN(): { dsn: string; source: string; isDemo?: boolean } | null {
   // Get command line arguments
   const args = parseCommandLineArgs();
-  
+
   // Check for demo mode first (highest priority)
   if (isDemoMode()) {
     // Will use in-memory SQLite with demo data
-    return { 
-      dsn: 'sqlite::memory:', 
-      source: 'demo mode', 
-      isDemo: true 
+    return {
+      dsn: "sqlite::memory:",
+      source: "demo mode",
+      isDemo: true,
     };
   }
-  
-  // 1. Check command line arguments 
+
+  // 1. Check command line arguments
   if (args.dsn) {
-    return { dsn: args.dsn, source: 'command line argument' };
+    return { dsn: args.dsn, source: "command line argument" };
   }
-  
+
   // 2. Check environment variables before loading .env
   if (process.env.DSN) {
-    return { dsn: process.env.DSN, source: 'environment variable' };
+    return { dsn: process.env.DSN, source: "environment variable" };
   }
-  
+
   // 3. Try loading from .env files
   const loadedEnvFile = loadEnvFiles();
   if (loadedEnvFile && process.env.DSN) {
     return { dsn: process.env.DSN, source: `${loadedEnvFile} file` };
   }
-  
+
   return null;
 }
 
@@ -121,51 +121,51 @@ export function resolveDSN(): { dsn: string; source: string; isDemo?: boolean } 
  * Resolve transport type from command line args or environment variables
  * Returns 'stdio' or 'sse', with 'stdio' as the default
  */
-export function resolveTransport(): { type: 'stdio' | 'sse'; source: string } {
+export function resolveTransport(): { type: "stdio" | "sse"; source: string } {
   // Get command line arguments
   const args = parseCommandLineArgs();
-  
+
   // 1. Check command line arguments first (highest priority)
   if (args.transport) {
-    const type = args.transport === 'sse' ? 'sse' : 'stdio';
-    return { type, source: 'command line argument' };
+    const type = args.transport === "sse" ? "sse" : "stdio";
+    return { type, source: "command line argument" };
   }
-  
+
   // 2. Check environment variables
   if (process.env.TRANSPORT) {
-    const type = process.env.TRANSPORT === 'sse' ? 'sse' : 'stdio';
-    return { type, source: 'environment variable' };
+    const type = process.env.TRANSPORT === "sse" ? "sse" : "stdio";
+    return { type, source: "environment variable" };
   }
-  
+
   // 3. Default to stdio
-  return { type: 'stdio', source: 'default' };
+  return { type: "stdio", source: "default" };
 }
 
 /**
  * Resolve port from command line args or environment variables
  * Returns port number with 8080 as the default
- * 
+ *
  * Note: The port option is only applicable when using --transport=sse
  * as it controls the HTTP server port for SSE connections.
  */
 export function resolvePort(): { port: number; source: string } {
   // Get command line arguments
   const args = parseCommandLineArgs();
-  
+
   // 1. Check command line arguments first (highest priority)
   if (args.port) {
     const port = parseInt(args.port, 10);
-    return { port, source: 'command line argument' };
+    return { port, source: "command line argument" };
   }
-  
+
   // 2. Check environment variables
   if (process.env.PORT) {
     const port = parseInt(process.env.PORT, 10);
-    return { port, source: 'environment variable' };
+    return { port, source: "environment variable" };
   }
-  
+
   // 3. Default to 8080
-  return { port: 8080, source: 'default' };
+  return { port: 8080, source: "default" };
 }
 
 /**
@@ -178,16 +178,16 @@ export function redactDSN(dsn: string): string {
   try {
     // Create a URL object to parse the DSN
     const url = new URL(dsn);
-    
+
     // Replace the password with asterisks
     if (url.password) {
-      url.password = '*******';
+      url.password = "*******";
     }
-    
+
     // Return the sanitized DSN
     return url.toString();
   } catch (error) {
     // If parsing fails, do basic redaction with regex
-    return dsn.replace(/\/\/([^:]+):([^@]+)@/, '//$1:***@');
+    return dsn.replace(/\/\/([^:]+):([^@]+)@/, "//$1:***@");
   }
 }

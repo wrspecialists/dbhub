@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { sqlGeneratorPromptHandler, sqlGeneratorSchema } from './sql-generator.js';
-import { dbExplainerPromptHandler, dbExplainerSchema } from './db-explainer.js';
+import { sqlGeneratorPromptHandler, sqlGeneratorSchema } from "./sql-generator.js";
+import { dbExplainerPromptHandler, dbExplainerSchema } from "./db-explainer.js";
 
 /**
  * Register all prompt handlers with the MCP server

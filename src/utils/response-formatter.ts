@@ -6,7 +6,10 @@
 /**
  * Create a success response with the given data
  */
-export function formatSuccessResponse<T>(data: T, meta: Record<string, any> = {}): {
+export function formatSuccessResponse<T>(
+  data: T,
+  meta: Record<string, any> = {}
+): {
   success: true;
   data: T;
   meta?: Record<string, any>;
@@ -14,14 +17,18 @@ export function formatSuccessResponse<T>(data: T, meta: Record<string, any> = {}
   return {
     success: true,
     data,
-    ...(Object.keys(meta).length > 0 ? { meta } : {})
+    ...(Object.keys(meta).length > 0 ? { meta } : {}),
   };
 }
 
 /**
  * Create an error response with the given message and code
  */
-export function formatErrorResponse(error: string, code: string = 'ERROR', details?: any): {
+export function formatErrorResponse(
+  error: string,
+  code: string = "ERROR",
+  details?: any
+): {
   success: false;
   error: string;
   code: string;
@@ -31,21 +38,23 @@ export function formatErrorResponse(error: string, code: string = 'ERROR', detai
     success: false,
     error,
     code,
-    ...(details ? { details } : {})
+    ...(details ? { details } : {}),
   };
 }
 
 /**
  * Create a tool error response object
  */
-export function createToolErrorResponse(error: string, code: string = 'ERROR', details?: any) {
+export function createToolErrorResponse(error: string, code: string = "ERROR", details?: any) {
   return {
-    content: [{ 
-      type: "text" as const, 
-      text: JSON.stringify(formatErrorResponse(error, code, details), null, 2),
-      mimeType: "application/json"
-    }],
-    isError: true
+    content: [
+      {
+        type: "text" as const,
+        text: JSON.stringify(formatErrorResponse(error, code, details), null, 2),
+        mimeType: "application/json",
+      },
+    ],
+    isError: true,
   };
 }
 
@@ -54,48 +63,66 @@ export function createToolErrorResponse(error: string, code: string = 'ERROR', d
  */
 export function createToolSuccessResponse<T>(data: T, meta: Record<string, any> = {}) {
   return {
-    content: [{ 
-      type: "text" as const, 
-      text: JSON.stringify(formatSuccessResponse(data, meta), null, 2),
-      mimeType: "application/json"
-    }]
+    content: [
+      {
+        type: "text" as const,
+        text: JSON.stringify(formatSuccessResponse(data, meta), null, 2),
+        mimeType: "application/json",
+      },
+    ],
   };
 }
 
 /**
  * Create a resource error response object
  */
-export function createResourceErrorResponse(uri: string, error: string, code: string = 'ERROR', details?: any) {
+export function createResourceErrorResponse(
+  uri: string,
+  error: string,
+  code: string = "ERROR",
+  details?: any
+) {
   return {
-    contents: [{
-      uri,
-      text: JSON.stringify(formatErrorResponse(error, code, details), null, 2),
-      mimeType: "application/json"
-    }]
+    contents: [
+      {
+        uri,
+        text: JSON.stringify(formatErrorResponse(error, code, details), null, 2),
+        mimeType: "application/json",
+      },
+    ],
   };
 }
 
 /**
  * Create a resource success response object
  */
-export function createResourceSuccessResponse<T>(uri: string, data: T, meta: Record<string, any> = {}) {
+export function createResourceSuccessResponse<T>(
+  uri: string,
+  data: T,
+  meta: Record<string, any> = {}
+) {
   return {
-    contents: [{
-      uri,
-      text: JSON.stringify(formatSuccessResponse(data, meta), null, 2),
-      mimeType: "application/json"
-    }]
+    contents: [
+      {
+        uri,
+        text: JSON.stringify(formatSuccessResponse(data, meta), null, 2),
+        mimeType: "application/json",
+      },
+    ],
   };
 }
 
 /**
  * Format a successful prompt response in the MCP format
  */
-export function formatPromptSuccessResponse(text: string, references: string[] = []): {
+export function formatPromptSuccessResponse(
+  text: string,
+  references: string[] = []
+): {
   messages: Array<{
-    role: 'assistant';
+    role: "assistant";
     content: {
-      type: 'text';
+      type: "text";
       text: string;
     };
   }>;
@@ -106,25 +133,28 @@ export function formatPromptSuccessResponse(text: string, references: string[] =
   return {
     messages: [
       {
-        role: 'assistant',
+        role: "assistant",
         content: {
-          type: 'text',
-          text
-        }
-      }
+          type: "text",
+          text,
+        },
+      },
     ],
-    ...(references.length > 0 ? { references } : {})
+    ...(references.length > 0 ? { references } : {}),
   };
 }
 
 /**
  * Format an error prompt response in the MCP format
  */
-export function formatPromptErrorResponse(error: string, code: string = 'ERROR'): {
+export function formatPromptErrorResponse(
+  error: string,
+  code: string = "ERROR"
+): {
   messages: Array<{
-    role: 'assistant';
+    role: "assistant";
     content: {
-      type: 'text';
+      type: "text";
       text: string;
     };
   }>;
@@ -136,14 +166,14 @@ export function formatPromptErrorResponse(error: string, code: string = 'ERROR')
   return {
     messages: [
       {
-        role: 'assistant',
+        role: "assistant",
         content: {
-          type: 'text',
-          text: `Error: ${error}`
-        }
-      }
+          type: "text",
+          text: `Error: ${error}`,
+        },
+      },
     ],
     error,
-    code
+    code,
   };
 }

@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { runQueryToolHandler, runQuerySchema } from './run-query.js';
-import { listConnectorsToolHandler } from './list-connectors.js';
+import { runQueryToolHandler, runQuerySchema } from "./run-query.js";
+import { listConnectorsToolHandler } from "./list-connectors.js";
 
 /**
  * Register all tool handlers with the MCP server

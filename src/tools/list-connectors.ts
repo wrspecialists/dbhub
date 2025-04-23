@@ -1,7 +1,7 @@
-import { ConnectorManager } from '../connectors/manager.js';
-import { ConnectorRegistry } from '../connectors/interface.js';
-import { createToolSuccessResponse } from '../utils/response-formatter.js';
-import { isDemoMode } from '../config/env.js';
+import { ConnectorManager } from "../connectors/manager.js";
+import { ConnectorRegistry } from "../connectors/interface.js";
+import { createToolSuccessResponse } from "../utils/response-formatter.js";
+import { isDemoMode } from "../config/env.js";
 
 /**
  * list_connectors tool handler
@@ -10,7 +10,7 @@ import { isDemoMode } from '../config/env.js';
  */
 export async function listConnectorsToolHandler(_args: {}, _extra: any) {
   const samples = ConnectorRegistry.getAllSampleDSNs();
-  
+
   // Get active connector if possible
   let activeConnectorId: string | null = null;
   try {
@@ -20,28 +20,28 @@ export async function listConnectorsToolHandler(_args: {}, _extra: any) {
   } catch (error) {
     // No active connector yet or not connected
   }
-  
+
   // If we're in demo mode, SQLite should be active
   const isDemo = isDemoMode();
   if (isDemo && !activeConnectorId) {
-    activeConnectorId = 'sqlite';
+    activeConnectorId = "sqlite";
   }
-  
+
   // Convert to a more structured format
-  const sampleObjects = Object.entries(samples).map(([id, dsn]) => ({ 
-    id, 
+  const sampleObjects = Object.entries(samples).map(([id, dsn]) => ({
+    id,
     dsn,
-    active: id === activeConnectorId
+    active: id === activeConnectorId,
   }));
-  
+
   // Prepare response data
   const responseData = {
     connectors: sampleObjects,
     count: sampleObjects.length,
     activeConnector: activeConnectorId,
-    demoMode: isDemo
+    demoMode: isDemo,
   };
-  
+
   // Use the utility to create a standardized response
   return createToolSuccessResponse(responseData);
 }
