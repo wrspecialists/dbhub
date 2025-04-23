@@ -1,4 +1,9 @@
 /**
+ * Type definition for supported database connector types
+ */
+export type ConnectorType = "postgres" | "mysql" | "mariadb" | "sqlite" | "sqlserver";
+
+/**
  * Database Connector Interface
  * This defines the contract that all database connectors must implement.
  */
@@ -58,7 +63,7 @@ export interface DSNParser {
 
 export interface Connector {
   /** A unique identifier for the connector */
-  id: string;
+  id: ConnectorType;
 
   /** Human-readable name of the connector */
   name: string;
@@ -139,7 +144,7 @@ export interface Connector {
  * Registry for available database connectors
  */
 export class ConnectorRegistry {
-  private static connectors: Map<string, Connector> = new Map();
+  private static connectors: Map<ConnectorType, Connector> = new Map();
 
   /**
    * Register a new connector
@@ -151,7 +156,7 @@ export class ConnectorRegistry {
   /**
    * Get a connector by ID
    */
-  static getConnector(id: string): Connector | null {
+  static getConnector(id: ConnectorType): Connector | null {
     return ConnectorRegistry.connectors.get(id) || null;
   }
 
@@ -171,15 +176,15 @@ export class ConnectorRegistry {
   /**
    * Get all available connector IDs
    */
-  static getAvailableConnectors(): string[] {
+  static getAvailableConnectors(): ConnectorType[] {
     return Array.from(ConnectorRegistry.connectors.keys());
   }
 
   /**
    * Get sample DSN for a specific connector
    */
-  static getSampleDSN(connectorId: string): string | null {
-    const connector = ConnectorRegistry.getConnector(connectorId);
+  static getSampleDSN(connectorType: ConnectorType): string | null {
+    const connector = ConnectorRegistry.getConnector(connectorType);
     if (!connector) return null;
     return connector.dsnParser.getSampleDSN();
   }
@@ -187,8 +192,8 @@ export class ConnectorRegistry {
   /**
    * Get all available sample DSNs
    */
-  static getAllSampleDSNs(): { [connectorId: string]: string } {
-    const samples: { [connectorId: string]: string } = {};
+  static getAllSampleDSNs(): { [key in ConnectorType]?: string } {
+    const samples: { [key in ConnectorType]?: string } = {};
     for (const [id, connector] of ConnectorRegistry.connectors.entries()) {
       samples[id] = connector.dsnParser.getSampleDSN();
     }

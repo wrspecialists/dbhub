@@ -1,6 +1,7 @@
 import sql from "mssql";
 import {
   Connector,
+  ConnectorType,
   ConnectorRegistry,
   DSNParser,
   QueryResult,
@@ -105,7 +106,7 @@ export class SQLServerDSNParser implements DSNParser {
  * SQL Server connector
  */
 export class SQLServerConnector implements Connector {
-  id = "sqlserver";
+  id: ConnectorType = "sqlserver";
   name = "SQL Server";
   dsnParser = new SQLServerDSNParser();
 

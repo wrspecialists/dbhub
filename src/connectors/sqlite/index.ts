@@ -9,6 +9,7 @@
 
 import {
   Connector,
+  ConnectorType,
   ConnectorRegistry,
   DSNParser,
   QueryResult,
@@ -87,7 +88,7 @@ interface SQLiteTableNameRow {
 }
 
 export class SQLiteConnector implements Connector {
-  id = "sqlite";
+  id: ConnectorType = "sqlite";
   name = "SQLite";
   dsnParser = new SQLiteDSNParser();
 

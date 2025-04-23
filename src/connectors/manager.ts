@@ -1,4 +1,4 @@
-import { Connector, ConnectorRegistry } from "./interface.js";
+import { Connector, ConnectorType, ConnectorRegistry } from "./interface.js";
 
 // Singleton instance for global access
 let managerInstance: ConnectorManager | null = null;
@@ -37,7 +37,7 @@ export class ConnectorManager {
   /**
    * Initialize and connect to the database using a specific connector type
    */
-  async connectWithType(connectorType: string, dsn?: string): Promise<void> {
+  async connectWithType(connectorType: ConnectorType, dsn?: string): Promise<void> {
     // Get the connector from the registry
     const connector = ConnectorRegistry.getConnector(connectorType);
 
@@ -85,14 +85,14 @@ export class ConnectorManager {
   /**
    * Get all available connector types
    */
-  static getAvailableConnectors(): string[] {
+  static getAvailableConnectors(): ConnectorType[] {
     return ConnectorRegistry.getAvailableConnectors();
   }
 
   /**
    * Get sample DSNs for all available connectors
    */
-  static getAllSampleDSNs(): { [connectorId: string]: string } {
+  static getAllSampleDSNs(): { [key in ConnectorType]?: string } {
     return ConnectorRegistry.getAllSampleDSNs();
   }
 

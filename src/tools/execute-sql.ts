@@ -3,6 +3,7 @@ import { ConnectorManager } from "../connectors/manager.js";
 import { createToolSuccessResponse, createToolErrorResponse } from "../utils/response-formatter.js";
 import { isReadOnlyMode } from "../config/env.js";
 import { allowedKeywords } from "../utils/allowed-keywords.js";
+import { ConnectorType } from "../connectors/interface.js";
 
 // Schema for execute_sql tool
 export const executeSqlSchema = {
@@ -15,7 +16,7 @@ export const executeSqlSchema = {
  * @param connectorType The database type to check against
  * @returns True if the query is read-only (starts with allowed keywords)
  */
-function isReadOnlyQuery(query: string, connectorType: string): boolean {
+function isReadOnlyQuery(query: string, connectorType: ConnectorType): boolean {
   const normalizedQuery = query.trim().toLowerCase();
   const firstWord = normalizedQuery.split(/\s+/)[0];
   

@@ -1,6 +1,7 @@
 import mariadb from "mariadb";
 import {
   Connector,
+  ConnectorType,
   ConnectorRegistry,
   DSNParser,
   QueryResult,
@@ -65,7 +66,7 @@ class MariadbDSNParser implements DSNParser {
  * MariaDB Connector Implementation
  */
 export class MariaDBConnector implements Connector {
-  id = "mariadb";
+  id: ConnectorType = "mariadb";
   name = "MariaDB";
   dsnParser = new MariadbDSNParser();
 

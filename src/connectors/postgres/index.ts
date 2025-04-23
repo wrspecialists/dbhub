@@ -2,6 +2,7 @@ import pg from "pg";
 const { Pool } = pg;
 import {
   Connector,
+  ConnectorType,
   ConnectorRegistry,
   DSNParser,
   QueryResult,
@@ -68,7 +69,7 @@ class PostgresDSNParser implements DSNParser {
  * PostgreSQL Connector Implementation
  */
 export class PostgresConnector implements Connector {
-  id = "postgres";
+  id: ConnectorType = "postgres";
   name = "PostgreSQL";
   dsnParser = new PostgresDSNParser();
 

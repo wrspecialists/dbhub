@@ -1,6 +1,7 @@
 import mysql from "mysql2/promise";
 import {
   Connector,
+  ConnectorType,
   ConnectorRegistry,
   DSNParser,
   QueryResult,
@@ -65,7 +66,7 @@ class MySQLDSNParser implements DSNParser {
  * MySQL Connector Implementation
  */
 export class MySQLConnector implements Connector {
-  id = "mysql";
+  id: ConnectorType = "mysql";
   name = "MySQL";
   dsnParser = new MySQLDSNParser();
 
