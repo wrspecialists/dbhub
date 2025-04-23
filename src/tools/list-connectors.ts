@@ -1,7 +1,7 @@
 import { ConnectorManager } from "../connectors/manager.js";
 import { ConnectorRegistry } from "../connectors/interface.js";
 import { createToolSuccessResponse } from "../utils/response-formatter.js";
-import { isDemoMode } from "../config/env.js";
+import { isDemoMode, isReadOnlyMode } from "../config/env.js";
 
 /**
  * list_connectors tool handler
@@ -40,6 +40,7 @@ export async function listConnectorsToolHandler(_args: {}, _extra: any) {
     count: sampleObjects.length,
     activeConnector: activeConnectorType,
     demoMode: isDemo,
+    readonlyMode: isReadOnlyMode(),
   };
 
   // Use the utility to create a standardized response
