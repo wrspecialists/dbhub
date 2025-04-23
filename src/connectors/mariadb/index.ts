@@ -470,7 +470,7 @@ export class MariaDBConnector implements Connector {
   validateQuery(query: string): { isValid: boolean; message?: string } {
     // Basic check to prevent non-SELECT queries
     const normalizedQuery = query.trim().toLowerCase();
-    if (!allowedKeywords.some((keyword) => normalizedQuery.startsWith(keyword))) {
+    if (!allowedKeywords.mariadb.some((keyword) => normalizedQuery.startsWith(keyword))) {
       return {
         isValid: false,
         message: "Only SELECT queries are allowed for security reasons.",

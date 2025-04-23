@@ -476,7 +476,7 @@ export class SQLServerConnector implements Connector {
   validateQuery(query: string): { isValid: boolean; message?: string } {
     // Basic check to prevent non-SELECT queries
     const normalizedQuery = query.trim().toLowerCase();
-    if (!allowedKeywords.some((keyword: string) => normalizedQuery.startsWith(keyword))) {
+    if (!allowedKeywords.sqlserver.some((keyword: string) => normalizedQuery.startsWith(keyword))) {
       return {
         isValid: false,
         message: "Only SELECT queries are allowed for security reasons.",
