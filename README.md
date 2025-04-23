@@ -281,6 +281,12 @@ npx @modelcontextprotocol/inspector
 
 Connect to the DBHub server `/sse` endpoint
 
+## Contributors
+
+<a href="https://github.com/bytebase/dbhub/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=bytebase/dbhub" />
+</a>
+
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=bytebase/dbhub&type=Date)](https://www.star-history.com/#bytebase/dbhub&Date)
