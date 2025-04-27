@@ -22,6 +22,8 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
  |                  |    |              |    |                  |
  |                  |    |              +--->+    MariaDB       |
  |                  |    |              |    |                  |
+ |                  |    |              +--->+     Oracle       |
+ |                  |    |              |    |                  |
  +------------------+    +--------------+    +------------------+
       MCP Clients           MCP Server             Databases
 ```
@@ -36,28 +38,28 @@ https://demo.dbhub.ai/sse connects a [sample employee database](https://github.c
 
 ### Database Resources
 
-| Resource Name               | URI Format                                             | PostgreSQL | MySQL | MariaDB | SQL Server | SQLite |
-| --------------------------- | ------------------------------------------------------ | :--------: | :---: | :-----: | :--------: | :----: |
-| schemas                     | `db://schemas`                                         |     ✅     |  ✅   |   ✅    |     ✅     |   ✅   |
-| tables_in_schema            | `db://schemas/{schemaName}/tables`                     |     ✅     |  ✅   |   ✅    |     ✅     |   ✅   |
-| table_structure_in_schema   | `db://schemas/{schemaName}/tables/{tableName}`         |     ✅     |  ✅   |   ✅    |     ✅     |   ✅   |
-| indexes_in_table            | `db://schemas/{schemaName}/tables/{tableName}/indexes` |     ✅     |  ✅   |   ✅    |     ✅     |   ✅   |
-| procedures_in_schema        | `db://schemas/{schemaName}/procedures`                 |     ✅     |  ✅   |   ✅    |     ✅     |   ❌   |
-| procedure_details_in_schema | `db://schemas/{schemaName}/procedures/{procedureName}` |     ✅     |  ✅   |   ✅    |     ✅     |   ❌   |
+| Resource Name               | URI Format                                             | PostgreSQL | MySQL | MariaDB | SQL Server | SQLite | Oracle |
+| --------------------------- | ------------------------------------------------------ | :--------: | :---: | :-----: | :--------: | :----: | :----: |
+| schemas                     | `db://schemas`                                         |     ✅     |  ✅   |   ✅    |     ✅     |   ✅   |   ✅   |
+| tables_in_schema            | `db://schemas/{schemaName}/tables`                     |     ✅     |  ✅   |   ✅    |     ✅     |   ✅   |   ✅   |
+| table_structure_in_schema   | `db://schemas/{schemaName}/tables/{tableName}`         |     ✅     |  ✅   |   ✅    |     ✅     |   ✅   |   ✅   |
+| indexes_in_table            | `db://schemas/{schemaName}/tables/{tableName}/indexes` |     ✅     |  ✅   |   ✅    |     ✅     |   ✅   |   ✅   |
+| procedures_in_schema        | `db://schemas/{schemaName}/procedures`                 |     ✅     |  ✅   |   ✅    |     ✅     |   ❌   |   ✅   |
+| procedure_details_in_schema | `db://schemas/{schemaName}/procedures/{procedureName}` |     ✅     |  ✅   |   ✅    |     ✅     |   ❌   |   ✅   |
 
 ### Database Tools
 
-| Tool            | Command Name      | PostgreSQL | MySQL | MariaDB | SQL Server | SQLite |
-| --------------- | ----------------- | :--------: | :---: | :-----: | :--------: | ------ |
-| Execute SQL     | `execute_sql`     |     ✅     |  ✅   |   ✅    |     ✅     | ✅     |
-| List Connectors | `list_connectors` |     ✅     |  ✅   |   ✅    |     ✅     | ✅     |
+| Tool            | Command Name      | PostgreSQL | MySQL | MariaDB | SQL Server | SQLite | Oracle |
+| --------------- | ----------------- | :--------: | :---: | :-----: | :--------: | ------ | :----: |
+| Execute Query   | `run_query`       |     ✅     |  ✅   |   ✅    |     ✅     | ✅     |   ✅   |
+| List Connectors | `list_connectors` |     ✅     |  ✅   |   ✅    |     ✅     | ✅     |   ✅   |
 
 ### Prompt Capabilities
 
-| Prompt              | Command Name   | PostgreSQL | MySQL | MariaDB | SQL Server | SQLite |
-| ------------------- | -------------- | :--------: | :---: | :-----: | :--------: | ------ |
-| Generate SQL        | `generate_sql` |     ✅     |  ✅   |   ✅    |     ✅     | ✅     |
-| Explain DB Elements | `explain_db`   |     ✅     |  ✅   |   ✅    |     ✅     | ✅     |
+| Prompt              | Command Name   | PostgreSQL | MySQL | MariaDB | SQL Server | SQLite | Oracle |
+| ------------------- | -------------- | :--------: | :---: | :-----: | :--------: | ------ | :----: |
+| Generate SQL        | `generate_sql` |     ✅     |  ✅   |   ✅    |     ✅     | ✅     |   ✅   |
+| Explain DB Elements | `explain_db`   |     ✅     |  ✅   |   ✅    |     ✅     | ✅     |   ✅   |
 
 ## Installation
 
@@ -85,6 +87,17 @@ docker run --rm --init \
    --demo
 ```
 
+```bash
+# Oracle example
+docker run --rm --init \
+   --name dbhub \
+   --publish 8080:8080 \
+   bytebase/dbhub \
+   --transport sse \
+   --port 8080 \
+   --dsn "oracle://username:password@localhost:1521/service_name"
+```
+
 ### NPM
 
 ```bash
@@ -95,6 +108,11 @@ npx @bytebase/dbhub --transport sse --port 8080 --dsn "postgres://user:password@
 ```bash
 # Demo mode with sample employee database
 npx @bytebase/dbhub --transport sse --port 8080 --demo
+```
+
+```bash
+# Oracle example
+npx @bytebase/dbhub --transport sse --port 8080 --dsn "oracle://username:password@localhost:1521/service_name"
 ```
 
 > Note: The demo mode includes a bundled SQLite sample "employee" database with tables for employees, departments, salaries, and more.
@@ -199,13 +217,17 @@ For real databases, a Database Source Name (DSN) is required. You can provide th
 
 DBHub supports the following database connection string formats:
 
-| Database   | DSN Format                                               | Example                                                                                                     |
-| ---------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| MySQL      | `mysql://[user]:[password]@[host]:[port]/[database]`     | `mysql://user:password@localhost:3306/dbname`                                                               |
-| MariaDB    | `mariadb://[user]:[password]@[host]:[port]/[database]`   | `mariadb://user:password@localhost:3306/dbname`                                                             |
-| PostgreSQL | `postgres://[user]:[password]@[host]:[port]/[database]`  | `postgres://user:password@localhost:5432/dbname?sslmode=disable`                                            |
-| SQL Server | `sqlserver://[user]:[password]@[host]:[port]/[database]` | `sqlserver://user:password@localhost:1433/dbname`                                                           |
-| SQLite     | `sqlite:///[path/to/file]` or `sqlite::memory:`          | `sqlite:///path/to/database.db`, `sqlite:C:/Users/YourName/data/database.db (windows)` or `sqlite::memory:` |
+| Database   | DSN Format                                               | Example                                                          |
+| ---------- | -------------------------------------------------------- | ---------------------------------------------------------------- |
+| MySQL      | `mysql://[user]:[password]@[host]:[port]/[database]`     | `mysql://user:password@localhost:3306/dbname`                    |
+| MariaDB    | `mariadb://[user]:[password]@[host]:[port]/[database]`   | `mariadb://user:password@localhost:3306/dbname`                  |
+| PostgreSQL | `postgres://[user]:[password]@[host]:[port]/[database]`  | `postgres://user:password@localhost:5432/dbname?sslmode=disable` |
+| SQL Server | `sqlserver://[user]:[password]@[host]:[port]/[database]` | `sqlserver://user:password@localhost:1433/dbname`                |
+| SQLite     | `sqlite:///[path/to/file]` or `sqlite::memory:`          | `sqlite:///path/to/database.db`, `sqlite:C:/Users/YourName/data/database.db (windows)`  or `sqlite::memory:`             |
+| Oracle     | `oracle://[user]:[password]@[host]:[port]/[service_name]` | `oracle://username:password@localhost:1521/service_name`        |
+
+> [!WARNING]
+> Oracle connection does not support privilege based connection for security reason. Raise a feature request if you need this feature, i would not recommend using Oracle in production.
 
 #### SQL Server
 
