@@ -32,6 +32,9 @@ importers:
       mysql2:
         specifier: ^3.13.0
         version: 3.13.0
+      oracledb:
+        specifier: ^6.5.1
+        version: 6.8.0
       pg:
         specifier: ^8.13.3
         version: 8.13.3
@@ -51,6 +54,9 @@ importers:
       '@types/node':
         specifier: ^22.13.10
         version: 22.13.10
+      '@types/oracledb':
+        specifier: ^6.6.0
+        version: 6.6.0
       '@types/pg':
         specifier: ^8.11.11
         version: 8.11.11
@@ -471,6 +477,9 @@ packages:
 
   '@types/node@22.13.10':
     resolution: {integrity: sha512-I6LPUvlRH+O6VRUqYOcMudhaIdUVWfsjnZavnsraHvpBwaEyMN29ry+0UVJhImYL16xsscu0aske3yA+uPOWfw==}
+
+  '@types/oracledb@6.6.0':
+    resolution: {integrity: sha512-s0iUXICj/MWfZ85+i3m6b9bppyuBGFaUB/k5HJ4zeC/XYiWrZulp1m54oWrNIjoBAfLXvqQBGy6+md8mwKyyKA==}
 
   '@types/pg@8.11.11':
     resolution: {integrity: sha512-kGT1qKM8wJQ5qlawUrEkXgvMSXoV213KfMGXcwfDwUIfUHXqXYXOfS1nE1LINRJVVVx5wCm70XnFlMHaIcQAfw==}
@@ -1182,6 +1191,10 @@ packages:
   open@10.1.0:
     resolution: {integrity: sha512-mnkeQ1qP5Ue2wd+aivTD3NHd/lZ96Lu0jgf0pwktLPtx6cTZiH7tyeGRRHs0zX0rbrahXPnXlUnbeXyaBBuIaw==}
     engines: {node: '>=18'}
+
+  oracledb@6.8.0:
+    resolution: {integrity: sha512-A4ds4n4xtjPTzk1gwrHWuMeWsEcrScF0GFgVebGrhNpHSAzn6eDwMKcSbakZODKfFcI099iqhmqWsgko8D+7Ww==}
+    engines: {node: '>=14.6'}
 
   package-json-from-dist@1.0.1:
     resolution: {integrity: sha512-UEZIS3/by4OC8vL3P2dTXRETpebLI2NiI5vIrjaD/5UtrkFX/tNbwjTSRAGC/+7CAo2pIcBaRgWmcBBHcsaCIw==}
@@ -2056,6 +2069,10 @@ snapshots:
     dependencies:
       undici-types: 6.20.0
 
+  '@types/oracledb@6.6.0':
+    dependencies:
+      '@types/node': 22.13.10
+
   '@types/pg@8.11.11':
     dependencies:
       '@types/node': 22.13.10
@@ -2809,6 +2826,8 @@ snapshots:
       define-lazy-prop: 3.0.0
       is-inside-container: 1.0.0
       is-wsl: 3.1.0
+
+  oracledb@6.8.0: {}
 
   package-json-from-dist@1.0.1: {}
 
