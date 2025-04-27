@@ -7,7 +7,7 @@ export type ConnectorType = "postgres" | "mysql" | "mariadb" | "sqlite" | "sqlse
  * Database Connector Interface
  * This defines the contract that all database connectors must implement.
  */
-export interface QueryResult {
+export interface SQLResult {
   rows: any[];
   [key: string]: any;
 }
@@ -136,8 +136,8 @@ export interface Connector {
    */
   getStoredProcedureDetail(procedureName: string, schema?: string): Promise<StoredProcedure>;
 
-  /** Execute a query */
-  executeQuery(query: string): Promise<QueryResult>;
+  /** Execute a SQL query */
+  executeSQL(sql: string): Promise<SQLResult>;
 }
 
 /**

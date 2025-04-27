@@ -1,4 +1,4 @@
-import { Connector, QueryResult, TableColumn, TableIndex, ConnectorRegistry, StoredProcedure, ConnectorType } from '../interface.js';
+import { Connector, SQLResult, TableColumn, TableIndex, ConnectorRegistry, StoredProcedure, ConnectorType } from '../interface.js';
 import oracledb, { Connection, ExecuteManyOptions, ExecuteOptions, Pool, Result, BindParameters } from 'oracledb';
 import { allowedKeywords } from '../../utils/allowed-keywords.js';
 
@@ -543,7 +543,7 @@ export class OracleConnector implements Connector {
     }
   }
 
-  async executeQuery(query: string, params?: any[]): Promise<QueryResult> {
+  async executeSQL(sql: string, params?: any[]): Promise<SQLResult> {
     try {
       const conn = await this.getConnection();
       try {
@@ -559,7 +559,7 @@ export class OracleConnector implements Connector {
 
           // Replace ? with named parameters in SQL
           let paramIndex = 1;
-          query = query.replace(/\?/g, () => `:param${paramIndex++}`);
+          sql = sql.replace(/\?/g, () => `:param${paramIndex++}`);
         }
 
         const options = {
@@ -569,7 +569,7 @@ export class OracleConnector implements Connector {
 
         // Validation is now handled in the execute-sql.ts tool handler
 
-        const result = await conn.execute(query, bindParams || {}, options);
+        const result = await conn.execute(sql, bindParams || {}, options);
 
         return {
           rows: result.rows || [],

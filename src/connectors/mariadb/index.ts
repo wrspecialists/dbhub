@@ -4,7 +4,7 @@ import {
   ConnectorType,
   ConnectorRegistry,
   DSNParser,
-  QueryResult,
+  SQLResult,
   TableColumn,
   TableIndex,
   StoredProcedure,
@@ -448,13 +448,13 @@ export class MariaDBConnector implements Connector {
     return rows[0].DB;
   }
 
-  async executeQuery(query: string): Promise<QueryResult> {
+  async executeSQL(sql: string): Promise<SQLResult> {
     if (!this.pool) {
       throw new Error("Not connected to database");
     }
 
     try {
-      const [rows, fields] = (await this.pool.query(query)) as [any[], any];
+      const [rows, fields] = (await this.pool.query(sql)) as [any[], any];
       return { rows, fields };
     } catch (error) {
       console.error("Error executing query:", error);

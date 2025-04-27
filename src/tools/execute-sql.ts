@@ -7,18 +7,18 @@ import { ConnectorType } from "../connectors/interface.js";
 
 // Schema for execute_sql tool
 export const executeSqlSchema = {
-  query: z.string().describe("SQL query to execute (SELECT only)"),
+  sql: z.string().describe("SQL query to execute (SELECT only)"),
 };
 
 /**
- * Check if a query is read-only based on its first keyword
- * @param query The SQL query to check
+ * Check if a SQL query is read-only based on its first keyword
+ * @param sql The SQL query to check
  * @param connectorType The database type to check against
  * @returns True if the query is read-only (starts with allowed keywords)
  */
-function isReadOnlyQuery(query: string, connectorType: ConnectorType): boolean {
-  const normalizedQuery = query.trim().toLowerCase();
-  const firstWord = normalizedQuery.split(/\s+/)[0];
+function isReadOnlySQL(sql: string, connectorType: ConnectorType): boolean {
+  const normalizedSQL = sql.trim().toLowerCase();
+  const firstWord = normalizedSQL.split(/\s+/)[0];
   
   // Get the appropriate allowed keywords list for this database type
   const keywordList = allowedKeywords[connectorType] || allowedKeywords.default || [];
@@ -30,19 +30,19 @@ function isReadOnlyQuery(query: string, connectorType: ConnectorType): boolean {
  * execute_sql tool handler
  * Executes a SQL query and returns the results
  */
-export async function executeSqlToolHandler({ query }: { query: string }, _extra: any) {
+export async function executeSqlToolHandler({ sql }: { sql: string }, _extra: any) {
   const connector = ConnectorManager.getCurrentConnector();
 
   try {
-    // Check if query is allowed based on readonly mode
-    if (isReadOnlyMode() && !isReadOnlyQuery(query, connector.id)) {
+    // Check if SQL is allowed based on readonly mode
+    if (isReadOnlyMode() && !isReadOnlySQL(sql, connector.id)) {
       return createToolErrorResponse(
         `Read-only mode is enabled. Only the following SQL operations are allowed: ${allowedKeywords[connector.id]?.join(", ") || "none"}`,
         "READONLY_VIOLATION"
       );
     }
-    // Execute the query if validation passed
-    const result = await connector.executeQuery(query);
+    // Execute the SQL query if validation passed
+    const result = await connector.executeSQL(sql);
 
     // Build response data
     const responseData = {

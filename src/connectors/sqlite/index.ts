@@ -12,7 +12,7 @@ import {
   ConnectorType,
   ConnectorRegistry,
   DSNParser,
-  QueryResult,
+  SQLResult,
   TableColumn,
   TableIndex,
   StoredProcedure,
@@ -315,13 +315,13 @@ export class SQLiteConnector implements Connector {
     );
   }
 
-  async executeQuery(query: string): Promise<QueryResult> {
+  async executeSQL(sql: string): Promise<SQLResult> {
     if (!this.db) {
       throw new Error("Not connected to SQLite database");
     }
 
     try {
-      const rows = this.db.prepare(query).all();
+      const rows = this.db.prepare(sql).all();
       return { rows };
     } catch (error) {
       throw error;

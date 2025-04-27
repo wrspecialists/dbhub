@@ -4,7 +4,7 @@ import {
   ConnectorType,
   ConnectorRegistry,
   DSNParser,
-  QueryResult,
+  SQLResult,
   TableColumn,
   TableIndex,
   StoredProcedure,
@@ -446,13 +446,13 @@ export class SQLServerConnector implements Connector {
     }
   }
 
-  async executeQuery(query: string): Promise<QueryResult> {
+  async executeSQL(sql: string): Promise<SQLResult> {
     if (!this.connection) {
       throw new Error("Not connected to SQL Server database");
     }
 
     try {
-      const result = await this.connection.request().query(query);
+      const result = await this.connection.request().query(sql);
       return {
         rows: result.recordset || [],
         fields:

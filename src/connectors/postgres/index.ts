@@ -5,7 +5,7 @@ import {
   ConnectorType,
   ConnectorRegistry,
   DSNParser,
-  QueryResult,
+  SQLResult,
   TableColumn,
   TableIndex,
   StoredProcedure,
@@ -378,14 +378,14 @@ export class PostgresConnector implements Connector {
     }
   }
 
-  async executeQuery(query: string): Promise<QueryResult> {
+  async executeSQL(sql: string): Promise<SQLResult> {
     if (!this.pool) {
       throw new Error("Not connected to database");
     }
 
     const client = await this.pool.connect();
     try {
-      return await client.query(query);
+      return await client.query(sql);
     } finally {
       client.release();
     }
