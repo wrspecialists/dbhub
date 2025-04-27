@@ -1,5 +1,6 @@
 import { Connector, QueryResult, TableColumn, TableIndex, ConnectorRegistry, StoredProcedure, ConnectorType } from '../interface.js';
 import oracledb, { Connection, ExecuteManyOptions, ExecuteOptions, Pool, Result, BindParameters } from 'oracledb';
+import { allowedKeywords } from '../../utils/allowed-keywords.js';
 
 // Adjust output format for large numbers and dates if needed
 // oracledb.fetchAsString = [ oracledb.NUMBER, oracledb.DATE, oracledb.TIMESTAMP_TZ ];
@@ -542,36 +543,7 @@ export class OracleConnector implements Connector {
     }
   }
 
-  async executeQuery(query: string): Promise<QueryResult> {
-    return this.runQuery(query);
-  }
-
-  validateQuery(query: string): { isValid: boolean; message?: string } {
-    // Basic validation to prevent destructive operations
-    const lowerQuery = query.toLowerCase().trim();
-
-    // Disallow DDL and DML operations that could modify data/schema
-    if (
-      lowerQuery.startsWith('drop ') ||
-      lowerQuery.startsWith('alter ') ||
-      lowerQuery.startsWith('create ') ||
-      lowerQuery.startsWith('truncate ') ||
-      lowerQuery.startsWith('delete ') ||
-      lowerQuery.startsWith('update ') ||
-      lowerQuery.startsWith('insert ') ||
-      lowerQuery.startsWith('grant ') ||
-      lowerQuery.startsWith('revoke ')
-    ) {
-      return {
-        isValid: false,
-        message: 'Data modification and schema modification operations are not allowed.',
-      };
-    }
-
-    return { isValid: true };
-  }
-
-  async runQuery(sql: string, params?: any[]): Promise<QueryResult> {
+  async executeQuery(query: string, params?: any[]): Promise<QueryResult> {
     try {
       const conn = await this.getConnection();
       try {
@@ -587,7 +559,7 @@ export class OracleConnector implements Connector {
 
           // Replace ? with named parameters in SQL
           let paramIndex = 1;
-          sql = sql.replace(/\?/g, () => `:param${paramIndex++}`);
+          query = query.replace(/\?/g, () => `:param${paramIndex++}`);
         }
 
         const options = {
@@ -595,13 +567,9 @@ export class OracleConnector implements Connector {
           autoCommit: true,
         };
 
-        // validate query
-        const validationResult = this.validateQuery(sql);
-        if (!validationResult.isValid) {
-          throw new Error(validationResult.message);
-        }
+        // Validation is now handled in the execute-sql.ts tool handler
 
-        const result = await conn.execute(sql, bindParams || {}, options);
+        const result = await conn.execute(query, bindParams || {}, options);
 
         return {
           rows: result.rows || [],

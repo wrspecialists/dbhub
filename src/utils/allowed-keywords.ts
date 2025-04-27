@@ -10,5 +10,6 @@ export const allowedKeywords: Record<ConnectorType, string[]> = {
   mysql: ["select", "with", "explain", "analyze", "show", "describe", "desc"],
   mariadb: ["select", "with", "explain", "analyze", "show", "describe", "desc"],
   sqlite: ["select", "with", "explain", "analyze", "pragma"],
-  sqlserver: ["select", "with", "explain", "showplan"]
+  sqlserver: ["select", "with", "explain", "showplan"],
+  oracle: ["select", "with", "explain"]
 };

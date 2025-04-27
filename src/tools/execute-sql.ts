@@ -41,7 +41,6 @@ export async function executeSqlToolHandler({ query }: { query: string }, _extra
         "READONLY_VIOLATION"
       );
     }
-
     // Execute the query if validation passed
     const result = await connector.executeQuery(query);
 
