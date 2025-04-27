@@ -1,4 +1,4 @@
-import { Connector, QueryResult, TableColumn, TableIndex, ConnectorRegistry, StoredProcedure } from '../interface.js';
+import { Connector, QueryResult, TableColumn, TableIndex, ConnectorRegistry, StoredProcedure, ConnectorType } from '../interface.js';
 import oracledb, { Connection, ExecuteManyOptions, ExecuteOptions, Pool, Result, BindParameters } from 'oracledb';
 
 // Adjust output format for large numbers and dates if needed
@@ -59,7 +59,7 @@ interface PrimaryKeyRow {
 
 export class OracleConnector implements Connector {
   // Connector ID and Name are part of the Connector interface
-  id: string = 'oracle';
+  id: ConnectorType = 'oracle';
   name: string = 'Oracle Database';
 
   private pool: Pool | null = null;
