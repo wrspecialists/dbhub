@@ -98,6 +98,17 @@ docker run --rm --init \
    --dsn "oracle://username:password@localhost:1521/service_name"
 ```
 
+```bash
+# Oracle example with thick mode for connecting to 11g or older 
+docker run --rm --init \
+   --name dbhub \
+   --publish 8080:8080 \
+   bytebase/dbhub-oracle-thick \
+   --transport sse \
+   --port 8080 \
+   --dsn "oracle://username:password@localhost:1521/service_name"
+```
+
 ### NPM
 
 ```bash
@@ -223,7 +234,13 @@ DBHub supports the following database connection string formats:
 
 #### Oracle
 
-If you see the error "NJS-138: connections to this database server version are not supported by node-oracledb in Thin mode", you need to use Thick mode as described below. To enable Thick mode:
+If you see the error "NJS-138: connections to this database server version are not supported by node-oracledb in Thin mode", you need to use Thick mode as described below.
+
+##### Docker
+
+Use `bytebase/dbhub-oracle-thick` instead of `bytebase/dbhub` docker image.
+
+##### npx
 
 1. Download and install [Oracle Instant Client](https://www.oracle.com/database/technologies/instant-client/downloads.html) for your platform
 1. Set the `ORACLE_LIB_DIR` environment variable to the path of your Oracle Instant Client:
