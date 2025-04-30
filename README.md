@@ -221,6 +221,21 @@ DBHub supports the following database connection string formats:
 | SQLite     | `sqlite:///[path/to/file]` or `sqlite::memory:`           | `sqlite:///path/to/database.db`, `sqlite:C:/Users/YourName/data/database.db (windows)` or `sqlite::memory:` |
 | Oracle     | `oracle://[user]:[password]@[host]:[port]/[service_name]` | `oracle://username:password@localhost:1521/service_name`                                                    |
 
+#### Oracle
+
+If you see the error "NJS-138: connections to this database server version are not supported by node-oracledb in Thin mode", you need to use Thick mode as described below. To enable Thick mode:
+
+1. Download and install [Oracle Instant Client](https://www.oracle.com/database/technologies/instant-client/downloads.html) for your platform
+1. Set the `ORACLE_LIB_DIR` environment variable to the path of your Oracle Instant Client:
+
+```bash
+# Set environment variable to Oracle Instant Client directory
+export ORACLE_LIB_DIR=/path/to/instantclient_19_8
+
+# Then run DBHub
+npx @bytebase/dbhub --dsn "oracle://username:password@localhost:1521/service_name"
+```
+
 #### SQL Server
 
 Extra query parameters:

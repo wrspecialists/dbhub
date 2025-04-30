@@ -68,16 +68,19 @@ export class OracleConnector implements Connector {
 
   // constructor(config: ConnectionConfig) { // Removed config
   constructor() {
-    // this.config = config;
-    // Oracle specific initialization can go here
-    // e.g., setting Thick mode if required
-    // try {
-    //   oracledb.initOracleClient({ libDir: process.env.ORACLE_LIB_DIR });
-    // } catch (err) {
-    //   console.error('Failed to initialize Oracle client:', err);
-    //   // Handle error appropriately
-    // }
-    // Optionally set auto-commit to true for simpler transaction handling
+    // Configure Oracle to use Thick mode if ORACLE_LIB_DIR is specified
+    try {
+      if (process.env.ORACLE_LIB_DIR) {
+        oracledb.initOracleClient({ libDir: process.env.ORACLE_LIB_DIR });
+        console.error('Oracle client initialized in Thick mode');
+      } else {
+        console.error('ORACLE_LIB_DIR not specified, will use Thin mode by default');
+      }
+    } catch (err) {
+      console.error('Failed to initialize Oracle client:', err);
+      // We'll continue with Thin mode, but it might not work with all server versions
+    }
+    // Set auto-commit to true for simpler transaction handling
     oracledb.autoCommit = true;
   }
 
@@ -183,6 +186,20 @@ export class OracleConnector implements Connector {
       }
     } catch (error) {
       console.error('Failed to connect to Oracle database:', error);
+      
+      // Add more helpful error message for NJS-138 error
+      if (error instanceof Error && error.message.includes('NJS-138')) {
+        const enhancedError = new Error(
+          `${error.message}\n\nThis error occurs when your Oracle database version is not supported by node-oracledb in Thin mode.\n` +
+          `To resolve this, you need to use Thick mode:\n` +
+          `1. Download Oracle Instant Client from https://www.oracle.com/database/technologies/instant-client/downloads.html\n` +
+          `2. Set ORACLE_LIB_DIR environment variable to the path of your Oracle Instant Client\n` +
+          `   Example: export ORACLE_LIB_DIR=/path/to/instantclient_19_8\n` +
+          `3. Restart DBHub`
+        );
+        throw enhancedError;
+      }
+      
       throw error;
     }
   }
