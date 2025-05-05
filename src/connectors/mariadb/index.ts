@@ -12,7 +12,11 @@ import {
 
 /**
  * MariaDB DSN Parser
- * Handles DSN strings like: mariadb://user:password@localhost:3306/dbname
+ * Handles DSN strings like: mariadb://user:password@localhost:3306/dbname?sslmode=require
+ * Supported SSL modes:
+ * - sslmode=disable: No SSL connection
+ * - sslmode=require: SSL connection without certificate verification
+ * - Any other value: Standard SSL connection with certificate verification
  */
 class MariadbDSNParser implements DSNParser {
   async parse(dsn: string): Promise<mariadb.ConnectionConfig> {
@@ -34,8 +38,14 @@ class MariadbDSNParser implements DSNParser {
 
       // Handle query parameters
       url.searchParams.forEach((value, key) => {
-        if (key === "ssl") {
-          config.ssl = value === "true" ? {} : undefined;
+        if (key === "sslmode") {
+          if (value === "disable") {
+            config.ssl = undefined;
+          } else if (value === "require") {
+            config.ssl = { rejectUnauthorized: false };
+          } else {
+            config.ssl = {};
+          }
         }
         // Add other parameters as needed
       });
@@ -49,7 +59,7 @@ class MariadbDSNParser implements DSNParser {
   }
 
   getSampleDSN(): string {
-    return "mariadb://root:password@localhost:3306/db";
+    return "mariadb://root:password@localhost:3306/db?sslmode=require";
   }
 
   isValidDSN(dsn: string): boolean {
