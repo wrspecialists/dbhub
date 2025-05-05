@@ -14,6 +14,10 @@ import {
 /**
  * PostgreSQL DSN Parser
  * Handles DSN strings like: postgres://user:password@localhost:5432/dbname?sslmode=disable
+ * Supported SSL modes:
+ * - sslmode=disable: No SSL
+ * - sslmode=require: SSL connection without certificate verification
+ * - Any other value: SSL with certificate verification
  */
 class PostgresDSNParser implements DSNParser {
   async parse(dsn: string): Promise<pg.PoolConfig> {
@@ -38,7 +42,13 @@ class PostgresDSNParser implements DSNParser {
       // Handle query parameters (like sslmode, etc.)
       url.searchParams.forEach((value, key) => {
         if (key === "sslmode") {
-          config.ssl = value !== "disable";
+          if (value === "disable") {
+            config.ssl = false;
+          } else if (value === "require") {
+            config.ssl = { rejectUnauthorized: false };
+          } else {
+            config.ssl = true;
+          }
         }
         // Add other parameters as needed
       });
@@ -52,7 +62,7 @@ class PostgresDSNParser implements DSNParser {
   }
 
   getSampleDSN(): string {
-    return "postgres://postgres:password@localhost:5432/postgres?sslmode=disable";
+    return "postgres://postgres:password@localhost:5432/postgres?sslmode=require";
   }
 
   isValidDSN(dsn: string): boolean {
