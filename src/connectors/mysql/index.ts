@@ -12,7 +12,11 @@ import {
 
 /**
  * MySQL DSN Parser
- * Handles DSN strings like: mysql://user:password@localhost:3306/dbname
+ * Handles DSN strings like: mysql://user:password@localhost:3306/dbname?sslmode=require
+ * Supported SSL modes:
+ * - sslmode=disable: No SSL connection
+ * - sslmode=require: SSL connection without certificate verification
+ * - Any other value: Standard SSL connection with certificate verification
  */
 class MySQLDSNParser implements DSNParser {
   async parse(dsn: string): Promise<mysql.ConnectionOptions> {
@@ -34,8 +38,14 @@ class MySQLDSNParser implements DSNParser {
 
       // Handle query parameters
       url.searchParams.forEach((value, key) => {
-        if (key === "ssl") {
-          config.ssl = value === "true" ? {} : undefined;
+        if (key === "sslmode") {
+          if (value === "disable") {
+            config.ssl = undefined;
+          } else if (value === "require") {
+            config.ssl = { rejectUnauthorized: false };
+          } else {
+            config.ssl = {};
+          }
         }
         // Add other parameters as needed
       });
@@ -49,7 +59,7 @@ class MySQLDSNParser implements DSNParser {
   }
 
   getSampleDSN(): string {
-    return "mysql://root:password@localhost:3306/mysql";
+    return "mysql://root:password@localhost:3306/mysql?sslmode=require";
   }
 
   isValidDSN(dsn: string): boolean {
