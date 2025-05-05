@@ -113,7 +113,7 @@ docker run --rm --init \
 
 ```bash
 # PostgreSQL example
-npx @bytebase/dbhub --transport sse --port 8080 --dsn "postgres://user:password@localhost:5432/dbname"
+npx @bytebase/dbhub --transport sse --port 8080 --dsn "postgres://user:password@localhost:5432/dbname?sslmode=disable"
 ```
 
 ```bash
@@ -174,6 +174,38 @@ npx @bytebase/dbhub --transport sse --port 8080 --demo
 - Follow [Cursor MCP guide](https://docs.cursor.com/context/model-context-protocol) and make sure to use [Agent](https://docs.cursor.com/chat/agent) mode.
 
 ## Usage
+
+### SSL Connections
+
+You can specify the SSL mode using the `sslmode` parameter in your DSN string:
+
+| Database   | `sslmode=disable` | `sslmode=require` | Default SSL Behavior |
+|------------|:----------------:|:----------------:|:-------------------:|
+| PostgreSQL | ✅ | ✅ | Certificate verification |
+| MySQL      | ✅ | ✅ | Certificate verification |
+| MariaDB    | ✅ | ✅ | Certificate verification |
+| SQL Server | ❌ | ❌ | Built-in encryption     |
+| SQLite     | ❌ | ❌ | N/A (file-based)        |
+| Oracle     | ❌ | ❌ | Built-in encryption     |
+
+**SSL Mode Options:**
+
+- `sslmode=disable`: All SSL/TLS encryption is turned off. Data is transmitted in plaintext.
+- `sslmode=require`: Connection is encrypted, but the server's certificate is not verified. This provides protection against packet sniffing but not against man-in-the-middle attacks. You may use this for trusted self-signed CA.
+
+Without specifying `sslmode`, most databases default to certificate verification, which provides the highest level of security.
+
+Example usage:
+```bash
+# Disable SSL
+postgres://user:password@localhost:5432/dbname?sslmode=disable
+
+# Require SSL without certificate verification
+postgres://user:password@localhost:5432/dbname?sslmode=require
+
+# Standard SSL with certificate verification (default)
+postgres://user:password@localhost:5432/dbname
+```
 
 ### Read-only Mode
 
