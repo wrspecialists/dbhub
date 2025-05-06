@@ -110,6 +110,8 @@ export class OracleConnector implements Connector {
         };
 
         // Extract additional options from URL query parameters
+        // SSL options:
+        // - sslmode: disable (no SSL), require (SSL without verification)
         url.searchParams.forEach((value, key) => {
           switch (key.toLowerCase()) {
             case 'poolmin':
@@ -121,7 +123,17 @@ export class OracleConnector implements Connector {
             case 'poolincrement':
               config.poolIncrement = parseInt(value, 10);
               break;
-            // Add more options as needed
+            case 'sslmode':
+              switch (value.toLowerCase()) {
+                case 'disable':
+                  // No SSL
+                  break;
+                case 'require':
+                  // SSL without verification
+                  config.sslServerDNMatch = false;
+                  break;
+              }
+              break;
           }
         });
 
@@ -132,7 +144,7 @@ export class OracleConnector implements Connector {
     },
 
     getSampleDSN: (): string => {
-      return 'oracle://username:password@host:1521/service_name';
+      return 'oracle://username:password@host:1521/service_name?sslmode=require';
     },
 
     isValidDSN: (dsn: string): boolean => {
