@@ -68,18 +68,6 @@ export class OracleConnector implements Connector {
 
   // constructor(config: ConnectionConfig) { // Removed config
   constructor() {
-    // Configure Oracle to use Thick mode if ORACLE_LIB_DIR is specified
-    try {
-      if (process.env.ORACLE_LIB_DIR) {
-        oracledb.initOracleClient({ libDir: process.env.ORACLE_LIB_DIR });
-        console.error('Oracle client initialized in Thick mode');
-      } else {
-        console.error('ORACLE_LIB_DIR not specified, will use Thin mode by default');
-      }
-    } catch (err) {
-      console.error('Failed to initialize Oracle client:', err);
-      // We'll continue with Thin mode, but it might not work with all server versions
-    }
     // Set auto-commit to true for simpler transaction handling
     oracledb.autoCommit = true;
   }
@@ -190,8 +178,34 @@ export class OracleConnector implements Connector {
     },
   };
 
+  // Track if we've already initialized the client
+  private static clientInitialized = false;
+
+  // Initialize Oracle client only once
+  private initClient(): void {
+    if (OracleConnector.clientInitialized) {
+      return;
+    }
+
+    try {
+      if (process.env.ORACLE_LIB_DIR) {
+        oracledb.initOracleClient({ libDir: process.env.ORACLE_LIB_DIR });
+        console.error('Oracle client initialized in Thick mode');
+      } else {
+        console.error('ORACLE_LIB_DIR not specified, will use Thin mode by default');
+      }
+      OracleConnector.clientInitialized = true;
+    } catch (err) {
+      console.error('Failed to initialize Oracle client:', err);
+      // We'll continue with Thin mode, but it might not work with all server versions
+    }
+  }
+
   async connect(dsn: string, initializationScript?: string): Promise<void> {
     try {
+      // Initialize Oracle client settings when connecting to Oracle database
+      this.initClient();
+
       const config = await this.dsnParser.parse(dsn);
 
       // Create a connection pool
