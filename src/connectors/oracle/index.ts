@@ -109,9 +109,6 @@ export class OracleConnector implements Connector {
           poolIncrement: 1,
         };
 
-        // Default SSL configuration
-        let sslMode: string | null = null;
-
         // Extract additional options from URL query parameters
         url.searchParams.forEach((value, key) => {
           switch (key.toLowerCase()) {
@@ -124,39 +121,9 @@ export class OracleConnector implements Connector {
             case 'poolincrement':
               config.poolIncrement = parseInt(value, 10);
               break;
-            case 'sslmode':
-              sslMode = value.toLowerCase();
-              break;
             // Add more options as needed
           }
         });
-
-        // Handle SSL mode options
-        if (sslMode) {
-          if (!config.connectionOptions) {
-            config.connectionOptions = {};
-          }
-          
-          if (!config.connectionOptions.transport) {
-            config.connectionOptions.transport = {};
-          }
-
-          if (sslMode === 'disable') {
-            // Disable SSL encryption
-            config.connectionOptions.transport.enableTcp = true;
-            config.connectionOptions.transport.enableTls = false;
-          } else if (sslMode === 'require') {
-            // Enable SSL but skip verification
-            config.connectionOptions.transport = {
-              enableTcp: true,
-              enableTls: true,
-              tlsOptions: {
-                rejectUnauthorized: false // Don't verify the server certificate
-              }
-            };
-          }
-          // Default is to enable SSL with verification (handled by Oracle driver)
-        }
 
         return config;
       } catch (error) {
@@ -165,7 +132,7 @@ export class OracleConnector implements Connector {
     },
 
     getSampleDSN: (): string => {
-      return 'oracle://username:password@host:1521/service_name?sslmode=require';
+      return 'oracle://username:password@host:1521/service_name';
     },
 
     isValidDSN: (dsn: string): boolean => {
