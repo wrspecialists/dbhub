@@ -185,8 +185,8 @@ You can specify the SSL mode using the `sslmode` parameter in your DSN string:
 | MySQL      | ✅ | ✅ | Certificate verification |
 | MariaDB    | ✅ | ✅ | Certificate verification |
 | SQL Server | ✅ | ✅ | Certificate verification |
+| Oracle     | ✅ | ✅ | Certificate verification |
 | SQLite     | ❌ | ❌ | N/A (file-based)        |
-| Oracle     | ❌ | ❌ | Built-in encryption     |
 
 **SSL Mode Options:**
 
@@ -262,7 +262,7 @@ DBHub supports the following database connection string formats:
 | PostgreSQL | `postgres://[user]:[password]@[host]:[port]/[database]`   | `postgres://user:password@localhost:5432/dbname?sslmode=disable`                                            |
 | SQL Server | `sqlserver://[user]:[password]@[host]:[port]/[database]`  | `sqlserver://user:password@localhost:1433/dbname?sslmode=disable`                                           |
 | SQLite     | `sqlite:///[path/to/file]` or `sqlite::memory:`           | `sqlite:///path/to/database.db`, `sqlite:C:/Users/YourName/data/database.db (windows)` or `sqlite::memory:` |
-| Oracle     | `oracle://[user]:[password]@[host]:[port]/[service_name]` | `oracle://username:password@localhost:1521/service_name`                                                    |
+| Oracle     | `oracle://[user]:[password]@[host]:[port]/[service_name]` | `oracle://username:password@localhost:1521/service_name?sslmode=disable`                                     |
 
 #### Oracle
 
