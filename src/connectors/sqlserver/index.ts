@@ -35,9 +35,7 @@ export class SQLServerDSNParser implements DSNParser {
     // Parse additional options from query parameters
     const options: Record<string, any> = {};
     for (const [key, value] of url.searchParams.entries()) {
-      if (key === "trustServerCertificate") {
-        options.trustServerCertificate = value === "true";
-      } else if (key === "connectTimeout") {
+      if (key === "connectTimeout") {
         options.connectTimeout = parseInt(value, 10);
       } else if (key === "requestTimeout") {
         options.requestTimeout = parseInt(value, 10);
