@@ -35,9 +35,7 @@ export class SQLServerDSNParser implements DSNParser {
     // Parse additional options from query parameters
     const options: Record<string, any> = {};
     for (const [key, value] of url.searchParams.entries()) {
-      if (key === "encrypt") {
-        options.encrypt = value === "true" ? true : value === "false" ? false : value;
-      } else if (key === "trustServerCertificate") {
+      if (key === "trustServerCertificate") {
         options.trustServerCertificate = value === "true";
       } else if (key === "connectTimeout") {
         options.connectTimeout = parseInt(value, 10);
@@ -45,7 +43,20 @@ export class SQLServerDSNParser implements DSNParser {
         options.requestTimeout = parseInt(value, 10);
       } else if (key === "authentication") {
         options.authentication = value;
+      } else if (key === "sslmode") {
+        options.sslmode = value;
       }
+    }
+
+    // Handle sslmode parameter similar to PostgreSQL and MySQL
+    if (options.sslmode) {
+      if (options.sslmode === "disable") {
+        options.encrypt = false;
+      } else if (options.sslmode === "require") {
+        options.encrypt = true;
+        options.trustServerCertificate = true;
+      }
+      // Default behavior (certificate verification) is handled by the default values below
     }
 
     // Base configuration without authentication first
@@ -89,7 +100,7 @@ export class SQLServerDSNParser implements DSNParser {
   }
 
   getSampleDSN(): string {
-    return "sqlserver://username:password@localhost:1433/database?encrypt=true";
+    return "sqlserver://username:password@localhost:1433/database?sslmode=require";
   }
 
   isValidDSN(dsn: string): boolean {
