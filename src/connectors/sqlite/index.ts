@@ -2,9 +2,7 @@
  * SQLite Connector Implementation
  *
  * Implements SQLite database connectivity for DBHub using better-sqlite3
- * To use this connector:
- * 1. Set DSN=sqlite:///path/to/database.db in your .env file
- * 2. Or set DB_CONNECTOR_TYPE=sqlite for default in-memory database
+ * To use this connector: Set DSN=sqlite:///path/to/database.db in your .env file
  */
 
 import {
