@@ -64,8 +64,8 @@ class MariadbDSNParser implements DSNParser {
 
   isValidDSN(dsn: string): boolean {
     try {
-      const url = new URL(dsn);
-      return url.protocol === "mariadb:";
+      // Check if the DSN starts with mariadb:// without using URL constructor
+      return dsn.startsWith('mariadb://')
     } catch (error) {
       return false;
     }

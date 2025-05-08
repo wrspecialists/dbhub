@@ -103,9 +103,9 @@ export class SQLServerDSNParser implements DSNParser {
 
   isValidDSN(dsn: string): boolean {
     try {
-      const url = new URL(dsn);
-      return url.protocol === "sqlserver:";
-    } catch (e) {
+      // Check if the DSN starts with sqlserver:// without using URL constructor
+      return dsn.startsWith('sqlserver://')
+    } catch (error) {
       return false;
     }
   }

@@ -65,8 +65,8 @@ class SQLiteDSNParser implements DSNParser {
 
   isValidDSN(dsn: string): boolean {
     try {
-      const url = new URL(dsn);
-      return url.protocol === "sqlite:";
+      // Check if the DSN starts with sqlite:// without using URL constructor
+      return dsn.startsWith('sqlite://')
     } catch (error) {
       return false;
     }

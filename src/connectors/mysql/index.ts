@@ -64,8 +64,8 @@ class MySQLDSNParser implements DSNParser {
 
   isValidDSN(dsn: string): boolean {
     try {
-      const url = new URL(dsn);
-      return url.protocol === "mysql:";
+      // Just check if it starts with mysql:// protocol
+      return dsn.startsWith('mysql://')
     } catch (error) {
       return false;
     }

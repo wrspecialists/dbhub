@@ -67,8 +67,8 @@ class PostgresDSNParser implements DSNParser {
 
   isValidDSN(dsn: string): boolean {
     try {
-      const url = new URL(dsn);
-      return url.protocol === "postgres:" || url.protocol === "postgresql:";
+      // Check if the DSN starts with postgres:// or postgresql:// without using URL constructor
+      return dsn.startsWith('postgres://') || dsn.startsWith('postgresql://')
     } catch (error) {
       return false;
     }

@@ -149,8 +149,8 @@ export class OracleConnector implements Connector {
 
     isValidDSN: (dsn: string): boolean => {
       try {
-        const url = new URL(dsn);
-        return url.protocol === 'oracle:';
+        // Check if the DSN starts with oracle:// without using URL constructor
+        return dsn.startsWith('oracle://')
       } catch (error) {
         return false;
       }
