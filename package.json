@@ -19,7 +19,7 @@
     "crossdev": "cross-env NODE_ENV=development tsx src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepare": "husky",
+    "prepare": "[[ \"$NODE_ENV\" != \"production\" ]] && husky || echo \"Skipping husky in production\"",
     "pre-commit": "lint-staged"
   },
   "keywords": [],

@@ -338,6 +338,24 @@ The demo mode uses an in-memory SQLite database loaded with the [sample employee
    pnpm start --transport stdio --dsn "postgres://user:password@localhost:5432/dbname?sslmode=disable"
    ```
 
+### Testing
+
+The project uses Vitest for testing:
+
+- Run tests: `pnpm test`
+- Run tests in watch mode: `pnpm test:watch`
+
+#### Pre-commit Hooks (for Developers)
+
+The project includes pre-commit hooks to run tests automatically before each commit:
+
+1. After cloning the repository, set up the pre-commit hooks:
+   ```bash
+   ./scripts/setup-husky.sh
+   ```
+
+2. This ensures the test suite runs automatically whenever you create a commit, preventing commits that would break tests.
+
 ### Debug with [MCP Inspector](https://github.com/modelcontextprotocol/inspector)
 
 #### stdio
