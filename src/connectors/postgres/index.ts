@@ -10,6 +10,7 @@ import {
   TableIndex,
   StoredProcedure,
 } from "../interface.js";
+import { SafeURL } from "../../utils/safe-url.js";
 
 /**
  * PostgreSQL DSN Parser
@@ -27,20 +28,20 @@ class PostgresDSNParser implements DSNParser {
     }
 
     try {
-      // For PostgreSQL, we can actually pass the DSN directly to the Pool constructor
-      // But we'll parse it here for consistency and to extract components if needed
-      const url = new URL(dsn);
+      // Use the SafeURL helper instead of the built-in URL
+      // This will handle special characters in passwords, etc.
+      const url = new SafeURL(dsn);
 
       const config: pg.PoolConfig = {
         host: url.hostname,
         port: url.port ? parseInt(url.port) : 5432,
-        database: url.pathname.substring(1), // Remove leading '/'
+        database: url.pathname ? url.pathname.substring(1) : '', // Remove leading '/' if exists
         user: url.username,
-        password: url.password ? decodeURIComponent(url.password) : "",
+        password: url.password,
       };
 
       // Handle query parameters (like sslmode, etc.)
-      url.searchParams.forEach((value, key) => {
+      url.forEachSearchParam((value, key) => {
         if (key === "sslmode") {
           if (value === "disable") {
             config.ssl = false;
@@ -67,8 +68,7 @@ class PostgresDSNParser implements DSNParser {
 
   isValidDSN(dsn: string): boolean {
     try {
-      // Check if the DSN starts with postgres:// or postgresql:// without using URL constructor
-      return dsn.startsWith('postgres://') || dsn.startsWith('postgresql://')
+      return dsn.startsWith('postgres://') || dsn.startsWith('postgresql://');
     } catch (error) {
       return false;
     }

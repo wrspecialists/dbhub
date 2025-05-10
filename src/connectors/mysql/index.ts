@@ -9,6 +9,7 @@ import {
   TableIndex,
   StoredProcedure,
 } from "../interface.js";
+import { SafeURL } from "../../utils/safe-url.js";
 
 /**
  * MySQL DSN Parser
@@ -26,18 +27,20 @@ class MySQLDSNParser implements DSNParser {
     }
 
     try {
-      const url = new URL(dsn);
+      // Use the SafeURL helper instead of the built-in URL
+      // This will handle special characters in passwords, etc.
+      const url = new SafeURL(dsn);
 
       const config: mysql.ConnectionOptions = {
         host: url.hostname,
         port: url.port ? parseInt(url.port) : 3306,
-        database: url.pathname.substring(1), // Remove leading '/'
+        database: url.pathname ? url.pathname.substring(1) : '', // Remove leading '/' if exists
         user: url.username,
-        password: url.password ? decodeURIComponent(url.password) : "",
+        password: url.password,
       };
 
       // Handle query parameters
-      url.searchParams.forEach((value, key) => {
+      url.forEachSearchParam((value, key) => {
         if (key === "sslmode") {
           if (value === "disable") {
             config.ssl = undefined;
@@ -64,8 +67,7 @@ class MySQLDSNParser implements DSNParser {
 
   isValidDSN(dsn: string): boolean {
     try {
-      // Just check if it starts with mysql:// protocol
-      return dsn.startsWith('mysql://')
+      return dsn.startsWith('mysql://');
     } catch (error) {
       return false;
     }

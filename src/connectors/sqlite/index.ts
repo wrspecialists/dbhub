@@ -16,6 +16,7 @@ import {
   StoredProcedure,
 } from "../interface.js";
 import Database from "better-sqlite3";
+import { SafeURL } from "../../utils/safe-url.js";
 
 /**
  * SQLite DSN Parser
@@ -32,7 +33,8 @@ class SQLiteDSNParser implements DSNParser {
     }
 
     try {
-      const url = new URL(dsn);
+      // Use SafeURL helper to handle special characters properly
+      const url = new SafeURL(dsn);
       let dbPath: string;
 
       // Handle in-memory database
@@ -65,8 +67,7 @@ class SQLiteDSNParser implements DSNParser {
 
   isValidDSN(dsn: string): boolean {
     try {
-      // Check if the DSN starts with sqlite:// without using URL constructor
-      return dsn.startsWith('sqlite://')
+      return dsn.startsWith('sqlite://');
     } catch (error) {
       return false;
     }

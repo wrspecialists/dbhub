@@ -1,6 +1,7 @@
 import { Connector, SQLResult, TableColumn, TableIndex, ConnectorRegistry, StoredProcedure, ConnectorType } from '../interface.js';
 import oracledb, { Connection, ExecuteManyOptions, ExecuteOptions, Pool, Result, BindParameters } from 'oracledb';
 import { allowedKeywords } from '../../utils/allowed-keywords.js';
+import { SafeURL } from '../../utils/safe-url.js';
 
 // Adjust output format for large numbers and dates if needed
 // oracledb.fetchAsString = [ oracledb.NUMBER, oracledb.DATE, oracledb.TIMESTAMP_TZ ];
@@ -80,39 +81,30 @@ export class OracleConnector implements Connector {
       }
 
       try {
-        const url = new URL(dsn);
+        const url = new SafeURL(dsn);
 
-        // Extract authentication details
-        const username = url.username;
-        const password = url.password;
-
-        // Extract host and port
-        const host = url.hostname;
-        const port = url.port ? parseInt(url.port, 10) : 1521; // Default Oracle port is 1521
-
-        // Extract service name or SID from pathname (remove leading slash)
+        // Extract service name from pathname (remove leading slash)
         let serviceName = url.pathname;
         if (serviceName.startsWith('/')) {
           serviceName = serviceName.substring(1);
         }
 
-        // Parse query parameters for additional options
-        const connectString = `${host}:${port}/${serviceName}`;
-
+        // Construct the connectString in Oracle format
+        const port = url.port ? parseInt(url.port) : 1521; // Default Oracle port is 1521
+        const connectString = `${url.hostname}:${port}/${serviceName}`;
+        
         // Set up the connection config
         const config: oracledb.PoolAttributes = {
-          user: username,
-          password: password,
+          user: url.username,
+          password: url.password,
           connectString: connectString,
           poolMin: 0,
           poolMax: 10,
           poolIncrement: 1,
         };
-
-        // Extract additional options from URL query parameters
-        // SSL options:
-        // - sslmode: disable (no SSL), require (SSL without verification)
-        url.searchParams.forEach((value, key) => {
+        
+        // Handle additional options from query parameters
+        url.forEachSearchParam((value, key) => {
           switch (key.toLowerCase()) {
             case 'poolmin':
               config.poolMin = parseInt(value, 10);
@@ -136,7 +128,7 @@ export class OracleConnector implements Connector {
               break;
           }
         });
-
+        
         return config;
       } catch (error) {
         throw new Error(`Failed to parse Oracle DSN: ${error instanceof Error ? error.message : String(error)}`);
@@ -149,8 +141,7 @@ export class OracleConnector implements Connector {
 
     isValidDSN: (dsn: string): boolean => {
       try {
-        // Check if the DSN starts with oracle:// without using URL constructor
-        return dsn.startsWith('oracle://')
+        return dsn.startsWith('oracle://');
       } catch (error) {
         return false;
       }

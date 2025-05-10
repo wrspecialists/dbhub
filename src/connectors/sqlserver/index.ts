@@ -10,6 +10,7 @@ import {
   StoredProcedure,
 } from "../interface.js";
 import { DefaultAzureCredential } from "@azure/identity";
+import { SafeURL } from "../../utils/safe-url.js";
 
 /**
  * SQL Server DSN parser
@@ -17,84 +18,87 @@ import { DefaultAzureCredential } from "@azure/identity";
  */
 export class SQLServerDSNParser implements DSNParser {
   async parse(dsn: string): Promise<sql.config> {
-    // Remove the protocol prefix
+    // Basic validation
     if (!this.isValidDSN(dsn)) {
       throw new Error(
         "Invalid SQL Server DSN format. Expected: sqlserver://username:password@host:port/database"
       );
     }
 
-    // Parse the DSN
-    const url = new URL(dsn);
-    const host = url.hostname;
-    const port = url.port ? parseInt(url.port, 10) : 1433; // Default SQL Server port
-    const database = url.pathname.substring(1); // Remove leading slash
-    const user = url.username;
-    const password = url.password ? decodeURIComponent(url.password) : "";
-
-    // Parse additional options from query parameters
-    const options: Record<string, any> = {};
-    for (const [key, value] of url.searchParams.entries()) {
-      if (key === "connectTimeout") {
-        options.connectTimeout = parseInt(value, 10);
-      } else if (key === "requestTimeout") {
-        options.requestTimeout = parseInt(value, 10);
-      } else if (key === "authentication") {
-        options.authentication = value;
-      } else if (key === "sslmode") {
-        options.sslmode = value;
+    try {
+      // Use the SafeURL helper to parse DSNs with special characters
+      const url = new SafeURL(dsn);
+      
+      // Parse additional options from query parameters
+      const options: Record<string, any> = {};
+      
+      // Process query parameters
+      url.forEachSearchParam((value, key) => {
+        if (key === "connectTimeout") {
+          options.connectTimeout = parseInt(value, 10);
+        } else if (key === "requestTimeout") {
+          options.requestTimeout = parseInt(value, 10);
+        } else if (key === "authentication") {
+          options.authentication = value;
+        } else if (key === "sslmode") {
+          options.sslmode = value;
+        }
+      });
+      
+      // Handle sslmode parameter similar to PostgreSQL and MySQL
+      if (options.sslmode) {
+        if (options.sslmode === "disable") {
+          options.encrypt = false;
+        } else if (options.sslmode === "require") {
+          options.encrypt = true;
+          options.trustServerCertificate = true;
+        }
+        // Default behavior (certificate verification) is handled by the default values below
       }
-    }
-
-    // Handle sslmode parameter similar to PostgreSQL and MySQL
-    if (options.sslmode) {
-      if (options.sslmode === "disable") {
-        options.encrypt = false;
-      } else if (options.sslmode === "require") {
-        options.encrypt = true;
-        options.trustServerCertificate = true;
+      
+      // Base configuration without authentication first
+      const config: sql.config = {
+        user: url.username,
+        password: url.password,
+        server: url.hostname,
+        port: url.port ? parseInt(url.port) : 1433, // Default SQL Server port
+        database: url.pathname ? url.pathname.substring(1) : '', // Remove leading slash
+        options: {
+          encrypt: options.encrypt ?? true, // Default to encrypted connection
+          trustServerCertificate: options.trustServerCertificate === true,
+          connectTimeout: options.connectTimeout ?? 15000,
+          requestTimeout: options.requestTimeout ?? 15000,
+        },
+      };
+      
+      // Handle Azure Active Directory authentication with access token
+      if (options.authentication === "azure-active-directory-access-token") {
+        try {
+          // Create a credential instance
+          const credential = new DefaultAzureCredential();
+          
+          // Get token for SQL Server resource
+          const token = await credential.getToken("https://database.windows.net/");
+          
+          // Set the token in the config
+          config.authentication = {
+            type: "azure-active-directory-access-token",
+            options: {
+              token: token.token,
+            },
+          };
+        } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          throw new Error(`Failed to get Azure AD token: ${errorMessage}`);
+        }
       }
-      // Default behavior (certificate verification) is handled by the default values below
+      
+      return config;
+    } catch (error) {
+      throw new Error(
+        `Failed to parse SQL Server DSN: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
-
-    // Base configuration without authentication first
-    const config: sql.config = {
-      user,
-      password,
-      server: host,
-      port,
-      database,
-      options: {
-        encrypt: options.encrypt ?? true, // Default to encrypted connection
-        trustServerCertificate: options.trustServerCertificate === true, // Need explicit conversion to boolean
-        connectTimeout: options.connectTimeout ?? 15000,
-        requestTimeout: options.requestTimeout ?? 15000,
-      },
-    };
-
-    // Handle Azure Active Directory authentication with access token
-    if (options.authentication === "azure-active-directory-access-token") {
-      try {
-        // Create a credential instance
-        const credential = new DefaultAzureCredential();
-
-        // Get token for SQL Server resource
-        const token = await credential.getToken("https://database.windows.net/");
-
-        // Set the token in the config
-        config.authentication = {
-          type: "azure-active-directory-access-token",
-          options: {
-            token: token.token,
-          },
-        };
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        throw new Error(`Failed to get Azure AD token: ${errorMessage}`);
-      }
-    }
-
-    return config;
   }
 
   getSampleDSN(): string {
@@ -103,8 +107,7 @@ export class SQLServerDSNParser implements DSNParser {
 
   isValidDSN(dsn: string): boolean {
     try {
-      // Check if the DSN starts with sqlserver:// without using URL constructor
-      return dsn.startsWith('sqlserver://')
+      return dsn.startsWith('sqlserver://');
     } catch (error) {
       return false;
     }
