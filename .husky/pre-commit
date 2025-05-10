@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run lint-staged to check only the files that are being committed
+pnpm lint-staged
+
+# Run the test suite to ensure everything passes
+pnpm test
