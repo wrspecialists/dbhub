@@ -4,6 +4,17 @@
  */
 
 /**
+ * Custom JSON replacer function to handle BigInt serialization
+ * Converts BigInt values to strings with format: "123n"
+ */
+export function bigIntReplacer(_key: string, value: any): any {
+  if (typeof value === 'bigint') {
+    return value.toString();
+  }
+  return value;
+}
+
+/**
  * Create a success response with the given data
  */
 export function formatSuccessResponse<T>(
@@ -50,7 +61,7 @@ export function createToolErrorResponse(error: string, code: string = "ERROR", d
     content: [
       {
         type: "text" as const,
-        text: JSON.stringify(formatErrorResponse(error, code, details), null, 2),
+        text: JSON.stringify(formatErrorResponse(error, code, details), bigIntReplacer, 2),
         mimeType: "application/json",
       },
     ],
@@ -66,7 +77,7 @@ export function createToolSuccessResponse<T>(data: T, meta: Record<string, any> 
     content: [
       {
         type: "text" as const,
-        text: JSON.stringify(formatSuccessResponse(data, meta), null, 2),
+        text: JSON.stringify(formatSuccessResponse(data, meta), bigIntReplacer, 2),
         mimeType: "application/json",
       },
     ],
@@ -86,7 +97,7 @@ export function createResourceErrorResponse(
     contents: [
       {
         uri,
-        text: JSON.stringify(formatErrorResponse(error, code, details), null, 2),
+        text: JSON.stringify(formatErrorResponse(error, code, details), bigIntReplacer, 2),
         mimeType: "application/json",
       },
     ],
@@ -105,7 +116,7 @@ export function createResourceSuccessResponse<T>(
     contents: [
       {
         uri,
-        text: JSON.stringify(formatSuccessResponse(data, meta), null, 2),
+        text: JSON.stringify(formatSuccessResponse(data, meta), bigIntReplacer, 2),
         mimeType: "application/json",
       },
     ],
