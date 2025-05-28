@@ -15,9 +15,9 @@ function generateRandomString(length: number): string {
   return result;
 }
 
-// Generate tool names with random suffixes when the module is loaded
-const EXECUTE_SQL_TOOL_NAME = `execute_sql_${generateRandomString(8)}`;
-const LIST_CONNECTORS_TOOL_NAME = `list_connectors_${generateRandomString(8)}`;
+// Generate tool names with random suffixes when the module is loaded in case it is loaded multiple times
+const EXECUTE_SQL_TOOL_NAME = `execute_sql_${generateRandomString(4)}`;
+const LIST_CONNECTORS_TOOL_NAME = `list_connectors_${generateRandomString(4)}`;
 
 /**
  * Register all tool handlers with the MCP server
