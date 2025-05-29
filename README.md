@@ -14,15 +14,15 @@ DBHub is a universal database gateway implementing the Model Context Protocol (M
  |                  |    |              |    |                  |
  |  Claude Desktop  +--->+              +--->+    PostgreSQL    |
  |                  |    |              |    |                  |
- |      Cursor      +--->+    DBHub     +--->+    SQL Server    |
+ |  Cursor          +--->+    DBHub     +--->+    SQL Server    |
  |                  |    |              |    |                  |
- |     Other MCP    +--->+              +--->+     SQLite       |
- |      Clients     |    |              |    |                  |
- |                  |    |              +--->+     MySQL        |
+ |  Other Clients   +--->+              +--->+    SQLite        |
+ |                  |    |              |    |                  |
+ |                  |    |              +--->+    MySQL         |
  |                  |    |              |    |                  |
  |                  |    |              +--->+    MariaDB       |
  |                  |    |              |    |                  |
- |                  |    |              +--->+     Oracle       |
+ |                  |    |              +--->+    Oracle        |
  |                  |    |              |    |                  |
  +------------------+    +--------------+    +------------------+
       MCP Clients           MCP Server             Databases
