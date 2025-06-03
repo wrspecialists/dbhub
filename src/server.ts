@@ -8,7 +8,7 @@ import { fileURLToPath } from "url";
 
 import { ConnectorManager } from "./connectors/manager.js";
 import { ConnectorRegistry } from "./connectors/interface.js";
-import { resolveDSN, resolveTransport, resolvePort, isDemoMode, redactDSN, isReadOnlyMode } from "./config/env.js";
+import { resolveDSN, resolveTransport, resolvePort, isDemoMode, redactDSN, isReadOnlyMode, resolveServerMetadata } from "./config/env.js";
 import { getSqliteInMemorySetupSql } from "./config/demo-loader.js";
 import { registerResources } from "./resources/index.js";
 import { registerTools } from "./tools/index.js";
@@ -76,9 +76,12 @@ See documentation for more details on configuring database connections.
       process.exit(1);
     }
 
-    // Create MCP server
+    // Create MCP server with customizable metadata
+    const { id, name, description } = resolveServerMetadata();
     const server = new McpServer({
-      name: SERVER_NAME,
+      id,
+      name,
+      description,
       version: SERVER_VERSION,
     });
 

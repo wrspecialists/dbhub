@@ -220,6 +220,17 @@ In read-only mode, only [readonly SQL operations](https://github.com/bytebase/db
 
 This provides an additional layer of security when connecting to production databases.
 
+### Custom Server Identity
+
+DBHub exposes its identity to MCP clients. If you run multiple instances,
+set a unique ID, name, or description using environment variables or CLI options:
+
+```bash
+MCP_ID="redpanda" MCP_NAME="Redpanda DB" npx @bytebase/dbhub --dsn "..."
+# or
+npx @bytebase/dbhub --mcp-id redpanda --mcp-name "Redpanda DB" --dsn "..."
+```
+
 ### Configure your database connection
 
 You can use DBHub in demo mode with a sample employee database for testing:
@@ -315,6 +326,9 @@ Extra query parameters:
 | transport | Transport mode: `stdio` or `sse`                                | `stdio`                      |
 | port      | HTTP server port (only applicable when using `--transport=sse`) | `8080`                       |
 | readonly  | Restrict SQL execution to read-only operations                  | `false`                      |
+| mcp-id    | Unique server identifier                                        | `dbhub`                      |
+| mcp-name  | Human-friendly server name                                      | `DBHub`                      |
+| mcp-description | Server description                                        | `Universal DB Gateway`       |
 
 The demo mode uses an in-memory SQLite database loaded with the [sample employee database](https://github.com/bytebase/dbhub/tree/main/resources/employee-sqlite) that includes tables for employees, departments, titles, salaries, department employees, and department managers. The sample database includes SQL scripts for table creation, data loading, and testing.
 
