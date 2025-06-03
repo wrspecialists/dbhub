@@ -212,3 +212,25 @@ export function redactDSN(dsn: string): string {
     return dsn.replace(/\/\/([^:]+):([^@]+)@/, "//$1:***@");
   }
 }
+
+export interface ServerMetadata {
+  id: string;
+  name: string;
+  description: string;
+}
+
+/**
+ * Resolve server metadata (id, name, description) from CLI args or env vars
+ */
+export function resolveServerMetadata(): ServerMetadata {
+  const args = parseCommandLineArgs();
+
+  const id = args["mcp-id"] || process.env.MCP_ID || "dbhub";
+  const name = args["mcp-name"] || process.env.MCP_NAME || "DBHub";
+  const description =
+    args["mcp-description"] ||
+    process.env.MCP_DESCRIPTION ||
+    "Universal DB Gateway";
+
+  return { id, name, description };
+}
